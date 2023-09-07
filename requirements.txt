@@ -4,6 +4,7 @@ astunparse==1.6.3
 async-timeout==4.0.3
 attrs==23.1.0
 braceexpand==0.1.7
+certifi==2023.7.22
 charset-normalizer==3.2.0
 click==8.1.7
 discord.py==2.3.2
@@ -13,5 +14,7 @@ import-expression==1.1.4
 jishaku==2.5.1
 line-profiler==4.1.1
 multidict==6.0.4
+requests==2.31.0
 six==1.16.0
+urllib3==2.0.4
 yarl==1.9.2
