@@ -1,13 +1,13 @@
-import requests, re
-import discord
+import re
 from discord.ext import commands
 from typing import Union
 
+from bot.bot import Bot
 from bot.static.constants import API_TOKEN, EVAL_LANGS, ALIASES
 
 class Eval(commands.Cog):
 
-    def __init__(self, client: commands.Bot):
+    def __init__(self, client: Bot):
         self.client = client
         self.url = "https://code-compiler10.p.rapidapi.com/"
 
@@ -46,11 +46,12 @@ class Eval(commands.Cog):
             "X-RapidAPI-Host": "code-compiler10.p.rapidapi.com"
         }
 
-        response = requests.post(self.url, json=payload, headers=headers)
+        response = await self.client.session.post(self.url, json=payload, headers=headers)
 
-        if response.status_code != 200:
-            return await ctx.send("Error: " + response.json()["message"])
-
-        await ctx.send("```" + lang + "\n" + response.json()["output"] + "\n```")
+        if response.status != 200:
+            return await ctx.send("The following error occured: " + await response.text())
+        
+        data = await response.json()
+        await ctx.send("```" + lang + "\n" + data["output"] + "\n```")
 
 Cog = Eval
