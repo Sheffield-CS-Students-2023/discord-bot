@@ -20,7 +20,7 @@ class Roles(commands.Cog):
     async def on_interaction(self, interaction: discord.Interaction):
         """Handles a buttonpress of the compsoc role button"""
 
-        if interaction.message.id != ROLE_MESSAGE_ID and not interaction.data["custom_id"].startswith("compsoc"): # Ignore any interaction recieved without defined process
+        if not interaction.message or (interaction.message.id != ROLE_MESSAGE_ID and not interaction.data["custom_id"].startswith("compsoc")): # Ignore any interaction recieved without defined process
             return
         
         if interaction.data["custom_id"] == "compsoc": # If button press was auto role
