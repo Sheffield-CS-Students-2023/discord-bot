@@ -55,4 +55,20 @@ class DotRemover(commands.Cog):
             # Delete the webhook
             await webhook.delete()
 
+    @commands.Cog.listener()
+    async def on_message_edit(self, before: discord.Message, after: discord.Message):
+        """If the last symbol of a message is a dot (unless 3 dots), remove dot, delete message and resend"""
+        if before.author.bot: return
+
+        # Figure out if it ends with a single dot and only has one sentence using rege
+        if (text := self._find_if_dot(after.content)):
+            # Create a webhook with the same name and avatar as the user, providing the avatar as bytes
+            webhook = await after.channel.create_webhook(name=after.author.display_name, avatar=await after.author.avatar.read())
+            # Send the message without the dot
+            await webhook.send(text)
+            # Delete original message
+            await after.delete()
+            # Delete the webhook
+            await webhook.delete()
+
 Cog = DotRemover
