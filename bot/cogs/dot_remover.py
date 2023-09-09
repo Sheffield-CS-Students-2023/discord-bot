@@ -13,7 +13,7 @@ class DotRemover(commands.Cog):
         whitespace = ["_ _"]
         for char in whitespace:
             # Use regex to remove all occurances of char after dot
-            text = re.sub(rf"{dot}{char}+", dot, text)
+            text = re.sub(rf"{dot}([ `]*{char})+", dot, text)
         return text
 
     def _find_if_dot(self, text: str) -> Union[str, None]:
@@ -36,12 +36,12 @@ class DotRemover(commands.Cog):
                     # If it is, remove both dots
                     return new_text[:-2]
                 return new_text[:-1]
-            elif new_text.endswith(dot + "`") and new_text.startswith("`") and not new_text.endswith(dot + dot + dot + "`"):
+            elif re.findall(rf"{dot} *`$") and new_text.count("`") == 2 and not re.findall(rf"{dot}{dot}{dot} *`$"):
                 # Check if third to last character is a dot
                 if new_text[-3] == dot:
                     # If it is, remove both dots
-                    return new_text[:-3] + "`"
-                return new_text[:-2] + "`"
+                    return re.sub(rf"{dot}{dot} *`$", "`", new_text)
+                return re.sub(rf"{dot} *`$", "`", new_text)
 
         # Create list of possible characters to surround dots that become invisible with markdown
         markdown = ["\*", "_", "~", "`"]
