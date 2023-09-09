@@ -8,6 +8,14 @@ class DotRemover(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
 
+    def _remove_whitespace_from_end(self, text: str, dot: str) -> str:
+        """Removes all things discord markdown renders as whitespace from the end of the text"""
+        whitespace = ["_ _", " ", "`"]
+        for char in whitespace:
+            # Use regex to remove all occurances of char after dot
+            text = re.sub(rf"{dot}{char}+", dot, text)
+        return text
+
     def _find_if_dot(self, text: str) -> Union[str, None]:
         """Attempts to find any variations and tricks using markdown, unicode characters etc to discuise a dot at the end of the last sentence in text"""
 
@@ -22,6 +30,10 @@ class DotRemover(commands.Cog):
         for dot in dots:
             # If the dot is found, return the text without dot
             if text.endswith(dot) and not text.endswith(dot + dot + dot):
+                # Check if second to last character is a dot
+                if text[-2] == dot:
+                    # If it is, remove both dots
+                    return text[:-2]
                 return text[:-1]
 
         # Create list of possible characters to surround dots that become invisible with markdown
@@ -33,8 +45,9 @@ class DotRemover(commands.Cog):
             for mark in markdown:
                 # If the dot is found, return the text without dot
                 dot = dot if dot != '.' else '\.'
-                if re.findall(rf"{mark}+{dot}{mark}+", text):
-                    text = re.sub(rf"{mark}+{dot}{mark}+", "", text)
+                one_to_two = "{1,2}"
+                if re.findall(rf"{mark}+{dot}{one_to_two}{mark}+", text):
+                    text = re.sub(rf"{mark}+{dot}{one_to_two}{mark}+", "", text)
                     return text
 
         return None # Message is dot free!!
