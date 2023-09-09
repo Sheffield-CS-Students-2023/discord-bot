@@ -18,6 +18,7 @@ class DotRemover(commands.Cog):
                 # Find occurances of ` after dot
                 occurances = list(re.findall(rf"{dot}([ `]*{char})*", text))[0].count("`")
                 text = re.sub(rf"{dot}([ `]*{char})*", dot + ("`" * occurances), text)
+                print(text)
         return text
 
     def _find_if_dot(self, text: str) -> Union[str, None]:
@@ -32,7 +33,7 @@ class DotRemover(commands.Cog):
 
         # Loop through all possible dots
         for dot in dots:
-            new_text = self._remove_whitespace_from_end(text, dot).replace("\.", ".")
+            new_text = re.sub(r"\\+\.", ".",self._remove_whitespace_from_end(text, dot))
             # If the dot is found, return the text without dot
             if new_text.endswith(dot) and not new_text.endswith(dot + dot + dot):
                 # Check if second to last character is a dot
@@ -58,7 +59,7 @@ class DotRemover(commands.Cog):
             for mark in markdown:
                 # If the dot is found, return the text without dot
                 dot = dot if dot != '.' else '\.'
-                new_text = self._remove_whitespace_from_end(text, dot).replace("\.", ".")
+                new_text = re.sub(r"\\+\.", ".",self._remove_whitespace_from_end(text, dot))
                 one_to_two = "{1,2}"
                 if re.findall(rf"{mark}+{dot}{one_to_two}{mark}+", new_text):
                     new_text = re.sub(rf"{mark}+{dot}{one_to_two}{mark}+", "", new_text)
