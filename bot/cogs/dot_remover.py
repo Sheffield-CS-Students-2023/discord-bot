@@ -10,17 +10,15 @@ class DotRemover(commands.Cog):
 
     def _remove_whitespace_from_end(self, text: str, dot: str) -> str:
         """Removes all things discord markdown renders as whitespace from the end of the text"""
-        print("Called")
         whitespace = ["_ _"]
         dot = dot if dot != '.' else '\.'
         for char in whitespace:
             # Use regex to remove all occurances of char after dot
-            print(re.findall(rf"{dot}([ `]*{char})*", text))
+            (re.findall(rf"{dot}([ `]*{char})*", text))
             if re.findall(rf"{dot}([ `]*{char})*", text):
                 # Find occurances of ` after dot
                 occurances = list(re.findall(rf"{dot}([ `]*{char})*", text))[0].count("`")
                 text = re.sub(rf"{dot}([ `]*{char})*", dot + ("`" * occurances), text)
-                print(text)
         return text
 
     def _find_if_dot(self, text: str) -> Union[str, None]:
