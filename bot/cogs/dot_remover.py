@@ -10,7 +10,7 @@ class DotRemover(commands.Cog):
 
     def _remove_whitespace_from_end(self, text: str, dot: str) -> str:
         """Removes all things discord markdown renders as whitespace from the end of the text"""
-        whitespace = ["_ _", " ", "`"]
+        whitespace = ["_ _"]
         for char in whitespace:
             # Use regex to remove all occurances of char after dot
             text = re.sub(rf"{dot}{char}+", dot, text)
@@ -28,13 +28,20 @@ class DotRemover(commands.Cog):
 
         # Loop through all possible dots
         for dot in dots:
+            new_text = self._remove_whitespace_from_end(text, dot)
             # If the dot is found, return the text without dot
-            if text.endswith(dot) and not text.endswith(dot + dot + dot):
+            if new_text.endswith(dot) and not new_text.endswith(dot + dot + dot):
                 # Check if second to last character is a dot
-                if text[-2] == dot:
+                if new_text[-2] == dot:
                     # If it is, remove both dots
-                    return text[:-2]
-                return text[:-1]
+                    return new_text[:-2]
+                return new_text[:-1]
+            elif new_text.endswith(dot + "`") and new_text.startswith("`") and not new_text.endswith(dot + dot + dot + "`"):
+                # Check if third to last character is a dot
+                if new_text[-3] == dot:
+                    # If it is, remove both dots
+                    return new_text[:-3] + "`"
+                return new_text[:-2] + "`"
 
         # Create list of possible characters to surround dots that become invisible with markdown
         markdown = ["\*", "_", "~", "`"]
@@ -44,11 +51,12 @@ class DotRemover(commands.Cog):
             # Loop through possible similar characters
             for mark in markdown:
                 # If the dot is found, return the text without dot
+                new_text = self._remove_whitespace_from_end(text, dot)
                 dot = dot if dot != '.' else '\.'
                 one_to_two = "{1,2}"
-                if re.findall(rf"{mark}+{dot}{one_to_two}{mark}+", text):
-                    text = re.sub(rf"{mark}+{dot}{one_to_two}{mark}+", "", text)
-                    return text
+                if re.findall(rf"{mark}+{dot}{one_to_two}{mark}+", new_text):
+                    new_text = re.sub(rf"{mark}+{dot}{one_to_two}{mark}+", "", new_text)
+                    return new_text
 
         return None # Message is dot free!!
 
