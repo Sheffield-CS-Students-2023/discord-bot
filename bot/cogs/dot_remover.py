@@ -10,10 +10,17 @@ class DotRemover(commands.Cog):
 
     def _remove_whitespace_from_end(self, text: str, dot: str) -> str:
         """Removes all things discord markdown renders as whitespace from the end of the text"""
+        print("Called")
         whitespace = ["_ _"]
+        dot = dot if dot != '.' else '\.'
         for char in whitespace:
             # Use regex to remove all occurances of char after dot
-            text = re.sub(rf"{dot}([ `]*{char})+", dot, text)
+            print(re.findall(rf"{dot}([ `]*{char})*", text))
+            if re.findall(rf"{dot}([ `]*{char})*", text):
+                # Find occurances of ` after dot
+                occurances = list(re.findall(rf"{dot}([ `]*{char})*", text))[0].count("`")
+                text = re.sub(rf"{dot}([ `]*{char})*", dot + ("`" * occurances), text)
+                print(text)
         return text
 
     def _find_if_dot(self, text: str) -> Union[str, None]:
@@ -23,12 +30,12 @@ class DotRemover(commands.Cog):
         dots = [".", "·", "․", "‧", "⋅", "・", "⸱", "◌ׅ", "ᐧ", "⏺", "●", "⚬", "⦁", "⸰"]
 
         joined_dots =  "\\" + "".join(dots)
-        if re.findall(rf"[{joined_dots}] ", text): # If the text has more than a single sentence the last dot does not need to be removed.
+        if len(re.findall(rf"[{joined_dots}] ", text)) > 1: # If the text has more than a single sentence the last dot does not need to be removed.
             return
 
         # Loop through all possible dots
         for dot in dots:
-            new_text = self._remove_whitespace_from_end(text, dot)
+            new_text = self._remove_whitespace_from_end(text, dot).replace("\.", ".")
             # If the dot is found, return the text without dot
             if new_text.endswith(dot) and not new_text.endswith(dot + dot + dot):
                 # Check if second to last character is a dot
@@ -36,12 +43,14 @@ class DotRemover(commands.Cog):
                     # If it is, remove both dots
                     return new_text[:-2]
                 return new_text[:-1]
-            elif re.findall(rf"{dot} *`$") and new_text.count("`") == 2 and not re.findall(rf"{dot}{dot}{dot} *`$"):
-                # Check if third to last character is a dot
-                if new_text[-3] == dot:
-                    # If it is, remove both dots
-                    return re.sub(rf"{dot}{dot} *`$", "`", new_text)
-                return re.sub(rf"{dot} *`$", "`", new_text)
+            else:
+                dot = dot if dot != '.' else '\.'
+                if re.findall(rf"{dot} *`$", new_text) and new_text.count("`") == 2 and not re.findall(rf"{dot}{dot}{dot} *`$", new_text):
+                    # Check if third to last character is a dot
+                    if new_text[-3] == dot:
+                        # If it is, remove both dots
+                        return re.sub(rf"{dot}{dot} *`$", "`", new_text)
+                    return re.sub(rf"{dot} *`$", "`", new_text)
 
         # Create list of possible characters to surround dots that become invisible with markdown
         markdown = ["\*", "_", "~", "`"]
@@ -51,8 +60,8 @@ class DotRemover(commands.Cog):
             # Loop through possible similar characters
             for mark in markdown:
                 # If the dot is found, return the text without dot
-                new_text = self._remove_whitespace_from_end(text, dot)
                 dot = dot if dot != '.' else '\.'
+                new_text = self._remove_whitespace_from_end(text, dot).replace("\.", ".")
                 one_to_two = "{1,2}"
                 if re.findall(rf"{mark}+{dot}{one_to_two}{mark}+", new_text):
                     new_text = re.sub(rf"{mark}+{dot}{one_to_two}{mark}+", "", new_text)
