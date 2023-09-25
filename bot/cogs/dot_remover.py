@@ -28,7 +28,7 @@ class DotRemover(commands.Cog):
         dots = [".", "·", "․", "‧", "⋅", "・", "⸱", "◌ׅ", "ᐧ", "⏺", "●", "⚬", "⦁", "⸰"]
 
         joined_dots =  "\\" + "".join(dots)
-        if len(re.findall(rf"[{joined_dots}] ", text)) > 1: # If the text has more than a single sentence the last dot does not need to be removed.
+        if len(re.findall(rf"([{joined_dots}] )|([{joined_dots}]$)", text)) > 1: # If the text has more than a single sentence the last dot does not need to be removed.
             return
 
         # Loop through all possible dots
