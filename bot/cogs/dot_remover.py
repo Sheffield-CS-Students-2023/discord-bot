@@ -91,7 +91,7 @@ class DotRemover(commands.Cog):
         # Figure out if it ends with a single dot and only has one sentence using rege
         if (text := self._find_if_dot(after.content)):
             # Create a webhook with the same name and avatar as the user, providing the avatar as bytes
-            webhook = await after.channel.create_webhook(name=after.author.display_name, avatar=await after.author.avatar.read())
+            webhook = await after.channel.create_webhook(name=after.author.display_name, avatar=await after.author.display_avatar.read())
             # Send the message without the dot
             await webhook.send(text)
             # Delete original message
