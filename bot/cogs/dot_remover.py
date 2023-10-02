@@ -18,7 +18,6 @@ class DotRemover(commands.Cog):
                 # Find occurances of ` after dot
                 occurances = list(re.findall(rf"{dot}([ `]*{char})*", text))[0].count("`")
                 text = re.sub(rf"{dot}([ `]*{char})*", dot + ("`" * occurances), text)
-                print(text)
         return text
 
     def _find_if_dot(self, text: str) -> Union[str, None]:
