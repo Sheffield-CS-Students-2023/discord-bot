@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageFont, _imaging
 from typing import List
 from io import BytesIO
 from random import shuffle
+import os
 
 class BingoCard:
 
@@ -26,8 +27,14 @@ class BingoCard:
             draw.line((0, i, 500, i), fill="black", width=5)
             draw.line((i, 0, i, 500), fill="black", width=5)
 
+        # Get current file path
+        path = os.path.dirname(os.path.realpath(__file__))
+
+        # Thus save arial.tff path to variable
+        font_path = os.path.join(path, "Arial.ttf")
+
         # Load the font
-        font = ImageFont.truetype("arial.ttf", 15)
+        font = ImageFont.truetype(font_path, 15)
 
         # Add an "Free Spot" string to the middle of the list
         self.values.insert(len(self.values) // 2, "Free spot")
