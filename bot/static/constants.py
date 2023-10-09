@@ -44,3 +44,19 @@ Enjoy!
 ROLES = {
     "compsoc": 1149059391753048174
 }
+
+BINGO = [
+    "repeats a slide",
+    "mentions testing",
+    "shows some weird diagram",
+    "mentions planes",
+    "goes on a 5 min tangent",
+    "mentions feedback",
+    "mentions waterfall",
+    "someone goes to sleep in the lecture",
+    "mentions \"client\" 5 times",
+    "someone plays a game on their laptop",
+    "going back to this bullshit analogy",
+    "people leaving during break",
+    "discord is active af"
+]
