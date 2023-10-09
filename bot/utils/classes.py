@@ -27,20 +27,8 @@ class BingoCard:
             draw.line((0, i, 500, i), fill="black", width=5)
             draw.line((i, 0, i, 500), fill="black", width=5)
 
-        # Get current file path
-        path = os.path.dirname(os.path.realpath(__file__))
-
-        # remove last two folders name from path
-        path = os.path.dirname(path)
-        path = os.path.dirname(path)
-
-        # Thus save arial.tff path to variable
-        font_path = os.path.join(path, "arial.ttf")
-
-        print(font_path)
-
         # Load the font
-        font = ImageFont.truetype(font_path, 15)
+        font = ImageFont.truetype("arial.tff", 15)
 
         # Add an "Free Spot" string to the middle of the list
         self.values.insert(len(self.values) // 2, "Free spot")
