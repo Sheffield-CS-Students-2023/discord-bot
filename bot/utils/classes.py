@@ -30,8 +30,14 @@ class BingoCard:
         # Get current file path
         path = os.path.dirname(os.path.realpath(__file__))
 
+        # remove last two folders name from path
+        path = os.path.dirname(path)
+        path = os.path.dirname(path)
+
         # Thus save arial.tff path to variable
-        font_path = os.path.join(path, "Arial.ttf")
+        font_path = os.path.join(path, "arial.ttf")
+
+        print(font_path)
 
         # Load the font
         font = ImageFont.truetype(font_path, 15)
