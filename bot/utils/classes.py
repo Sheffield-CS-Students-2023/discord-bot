@@ -1,59 +1,96 @@
-from PIL import Image, ImageDraw, ImageFont, _imaging
-from typing import List
-from io import BytesIO
-from random import shuffle
-import os
+from typing import List, Optional, Dict, Union
 
-class BingoCard:
+from bot.static.constants import STARBORD
 
-    def __init__(self, values=List[str], x=5, y=5):
-        self.values: List[str] = values
-        # Only take a random sample of x*y-1 values
-        shuffle(self.values)
-        self.values = self.values[:x * y - 1]
+class Starboard:
 
-        self.x: int = x
-        self.y: int = y
+    cache = {}
 
-    def create(self) -> BytesIO:
-        """Draw a XxY bingo sheet with the given values using pillow and return it as a bytesIO object"""
+    @classmethod 
+    def __get_cache(cls):
+        """Returns a cached object"""
+        return cls.cache
 
-        # Create a new image
-        image = Image.new("RGB", (self.x * 100, self.y * 100), color="white")
-        draw = ImageDraw.Draw(image)
+    def __new__(cls, *args, **kwargs):
+        existing = cls.__get_cache()
+        if existing:
+            return existing
+        return super().__new__(cls)
 
-        # Draw the grid
-        for i in range(0, 500, 100):
-            draw.line((0, i, 500, i), fill="black", width=5)
-            draw.line((i, 0, i, 500), fill="black", width=5)
+    def __init__(self):
+        if self.cache:
+            return 
 
-        # Load the font
-        font = ImageFont.truetype("arial.tff", 15)
+        # Establish connection to the database
+        self.data = STARBORD.find({})
+        self.data: List[Dict[str, Union[List[int], None, int]]] = [i for i in self.data]
 
-        # Add an "Free Spot" string to the middle of the list
-        self.values.insert(len(self.values) // 2, "Free spot")
-        # For some reason this is just a blank space and idk why but it works so I'm not gonna question it TODO: Figure out why this workn't
+        # Cache the data
+        self.cache = self.data
 
-        # Add text to the image
-        for i, value in enumerate(self.values):
-            x = (i % self.x) * 100 + 50
-            y = (i // self.y) * 100 + 50
-            # if text is longer than box width, split it into multiple lines (as a loop) but does not split words
-            if len(value) > 10:
-                words = value.split(" ")
-                lines = []
-                line = ""
-                for word in words:
-                    if len(line + word) > 10:
-                        lines.append(line)
-                        line = ""
-                    line += word + " "
-                lines.append(line)
-                for j, line in enumerate(lines):
-                    draw.text((x, y + (j - len(lines) // 2) * 15), line, fill="black", font=font, anchor="mm")
+    def __getitem__(self, key: int):
+        """Get a starboard message by its id"""
+        for i in self.data:
+            if i["_id"] == key:
+                return i
+        raise KeyError(f"Starboard message with id {key} not found")
+    
+    def __setitem__(self, key: int, value: dict):
+        """Set a starboard message by its id"""
+        for i in self.data:
+            if i["_id"] == key:
+                i = value
+                STARBORD.update_one({"_id": key}, {"$set": value})
+                return
+        raise KeyError(f"Starboard message with id {key} not found")
+    
+    def __iter__(self):
+        """Iterate through all starboard messages"""
+        return iter(self.data)
+    
+    def __len__(self):
+        """Return the amount of starboard messages"""
+        return len(self.data)
+    
+    def __contains__(self, key: int):
+        """Check if a starboard message with the given id exists"""
+        for i in self.data:
+            if i["id"] == key:
+                return True
+        return False
 
-        # Save image to io buffer
-        buffer = BytesIO()
-        image.save(buffer, format="PNG")
-        buffer.seek(0)
-        return buffer
+    def __repr__(self):
+        return f"<Starboard: {len(self.data)} messages>"
+    
+    def __str__(self):
+        return f"Starboard with {len(self.data)} messages"
+    
+    def append(self, value: dict):
+        """Add a starboard message to the database"""
+        self.data.append(value)
+        STARBORD.insert_one(value)
+
+    def add_star(self, key: int, user_id: int, author_id: int) -> dict:
+        """Add a star to a starboard message"""
+        found = False
+
+        for i in self.data:
+            if i["_id"] == key:
+                i["stars"].append(user_id)
+                STARBORD.update_one({"_id": key}, {"$set": {"stars": i["stars"]}})
+                found = True
+                break
+                
+        if not found:
+            self.append({"_id": key, "stars": [user_id], "starboard_id": None, "author_id": author_id})
+
+        return self[key]
+        
+
+    def remove_star(self, key: int, user_id: int) -> Optional[dict]:
+        """Remove a star from a starboard message. If no starboard message is found, return None"""
+        for i in self.data:
+            if i["_id"] == key:
+                i["stars"].remove(user_id)
+                STARBORD.update_one({"_id": key}, {"$set": {"stars": i["stars"]}})
+                return i

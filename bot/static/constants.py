@@ -1,10 +1,18 @@
 import json
+from pymongo import MongoClient
 
 with open("config.json", "r") as f:
     config = json.load(f)
 
+CLUSTER = MongoClient(config["mongodb"])
+DB = CLUSTER["discord"]
+STARBORD = DB["starboard"]
+
 TOKEN = config["token"]
 API_TOKEN = config["api_token"]
+
+MIN_STARS = 3
+STARBOARD_CHANNEL_ID = 1162423699455090748
 
 GUILD_ID = 1093287471162335244
 
