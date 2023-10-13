@@ -14,7 +14,7 @@ class Welcome(commands.Cog):
 
         try: # Dm may fail due to closed dms
             await member.send(WELCOME_TEXT.format(member.display_name))
-        except discord.Forbidden:
+        except discord.HTTPException:
             pass
 
 Cog = Welcome
