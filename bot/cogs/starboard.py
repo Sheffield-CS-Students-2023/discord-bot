@@ -21,6 +21,7 @@ class Starboard(commands.Cog):
 
     @commands.Cog.listener("on_raw_reaction_add")
     async def on_reaction_add(self, payload: discord.RawReactionActionEvent):
+        print("Reaction")
         # Check if reaction is a star using unicode
         if str(payload.emoji) != "\U00002b50" or \
                 payload.guild_id != GUILD_ID or \
@@ -78,7 +79,7 @@ class Starboard(commands.Cog):
         starboard = StarboardClass()
 
         reaction_channel = await self.client.fetch_channel(payload.channel_id)
-        reaction_message = await reaction_channel.fetch_message(payload.message_id)
+        # reaction_message = await reaction_channel.fetch_message(payload.message_id)
 
         # Remove a star from the starboard
         data = starboard.remove_star(payload.message_id, payload.user_id)
