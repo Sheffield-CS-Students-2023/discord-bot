@@ -29,7 +29,7 @@ class Starboard(commands.Cog):
         
         starboard = StarboardClass()
 
-        if payload.user_id in starboard[payload.message_id]: # Edgecase
+        if payload.message_id in starboard and payload.user_id in starboard[payload.message_id]: # Edgecase
             return
 
         reaction_channel = await self.client.fetch_channel(payload.channel_id)
