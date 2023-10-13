@@ -21,7 +21,6 @@ class Starboard(commands.Cog):
 
     @commands.Cog.listener("on_raw_reaction_add")
     async def on_reaction_add(self, payload: discord.RawReactionActionEvent):
-        print("Reaction")
         # Check if reaction is a star using unicode
         if str(payload.emoji) != "\U00002b50" or \
                 payload.guild_id != GUILD_ID or \
