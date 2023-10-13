@@ -55,7 +55,7 @@ class Starboard:
     def __contains__(self, key: int):
         """Check if a starboard message with the given id exists"""
         for i in self.data:
-            if i["id"] == key:
+            if i["_id"] == key:
                 return True
         return False
 
