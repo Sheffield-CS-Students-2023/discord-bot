@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from io import BytesIO
 
+from typing import List
 from math import floor
 from random import sample
 from textwrap import fill
@@ -39,7 +40,7 @@ class Bingo(commands.Cog):
         number_of_items: int = items_per_row**2
         square_size: int = floor(card_pixel_height / items_per_row)
 
-        chosen_items: list[str] = sample(bingo_items, number_of_items)
+        chosen_items: List[str] = sample(bingo_items, number_of_items)
         font = ImageFont.truetype("arial.ttf" if self.client.is_dev else "/usr/share/fonts/truetype/msttcorefonts/Arial.ttf", floor(card_pixel_height/20))
         card_image = Image.new("RGB", (card_pixel_height, card_pixel_height), color=(66,69,73))
 
