@@ -2,9 +2,10 @@ import discord
 from discord.ext import commands
 from io import BytesIO
 
-from typing import List
+from math import floor
 from random import sample
 from textwrap import fill
+from PIL import Image, ImageDraw, ImageFont
 
 from bot.static.constants import BINGO
 from bot.bot import Bot
@@ -14,7 +15,7 @@ class Bingo(commands.Cog):
     def __init__(self, client: Bot):
         self.client = client
 
-    def draw_square(text, font, size):
+    def draw_square(self, text: str, font: str, size: int) -> Image.Image:
         '''
         Draw a single bingo square
         '''
@@ -31,7 +32,7 @@ class Bingo(commands.Cog):
         draw.text((4,4), fill(text, width=10), font=font, fill=(255,255,255))
         return square
 
-    def draw_card(items_per_row: int, card_pixel_height: int, bingo_items: list[str]):
+    def draw_card(self, items_per_row: int, card_pixel_height: int, bingo_items: list[str]) -> BytesIO:
         '''
         Draw a bingo card by selecting random items from a list
         '''
@@ -39,14 +40,14 @@ class Bingo(commands.Cog):
         square_size: int = floor(card_pixel_height / items_per_row)
 
         chosen_items: list[str] = sample(bingo_items, number_of_items)
-        font = ImageFont.truetype("OpenSans-Medium.ttf", floor(card_pixel_height/20))
+        font = ImageFont.truetype("arial.ttf" if self.client.is_dev else "/usr/share/fonts/truetype/msttcorefonts/Arial.ttf", floor(card_pixel_height/20))
         card_image = Image.new("RGB", (card_pixel_height, card_pixel_height), color=(66,69,73))
 
         for i in range(number_of_items):
             if i == floor(number_of_items/2):
-                square_image = draw_square("Free Space", font, square_size) # The free space
+                square_image = self.draw_square("Free Space", font, square_size) # The free space
             else:
-                square_image = draw_square(chosen_items[i], font, square_size)
+                square_image = self.draw_square(chosen_items[i], font, square_size)
 
             card_image.paste(square_image, ((i % items_per_row)*square_size, (i // items_per_row)*square_size))
 
@@ -59,7 +60,7 @@ class Bingo(commands.Cog):
     @commands.command()
     async def bingo(self, ctx: commands.Context):
         """Create a random bingo card"""
-        buffer = self.draw_card(3, 300, BINGO)
+        buffer = self.draw_card(4, 300, BINGO)
         await ctx.send(file=discord.File(buffer, filename="bingo.png"))
 
 Cog = Bingo

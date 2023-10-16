@@ -66,5 +66,9 @@ BINGO = [
     "someone plays a game on their laptop",
     "going back to this bullshit analogy",
     "people leaving during break",
-    "discord is active af"
+    "discord is active af",
+    "self drawn diagram",
+    "asks if we want a break",
+    "mentions waterfall",
+    "mentions scrums"
 ]
