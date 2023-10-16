@@ -3,7 +3,8 @@ from discord.ext import commands
 from io import BytesIO
 
 from typing import List
-from random import shuffle
+from random import sample
+from textwrap import fill
 
 from bot.static.constants import BINGO
 from bot.bot import Bot
