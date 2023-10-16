@@ -33,7 +33,7 @@ class Bingo(commands.Cog):
         draw.text((4,4), fill(text, width=10), font=font, fill=(255,255,255))
         return square
 
-    def draw_card(self, items_per_row: int, card_pixel_height: int, bingo_items: list[str]) -> BytesIO:
+    def draw_card(self, items_per_row: int, card_pixel_height: int, bingo_items: List[str]) -> BytesIO:
         '''
         Draw a bingo card by selecting random items from a list
         '''
