@@ -36,7 +36,7 @@ class DotRemover(commands.Cog):
             # If the dot is found, return the text without dot
             if new_text.endswith(dot) and not new_text.endswith(dot + dot + dot):
                 # Check if second to last character is a dot
-                if new_text[-2] == dot:
+                if len(new_text) > 1 and new_text[-2] == dot:
                     # If it is, remove both dots
                     return new_text[:-2]
                 return new_text[:-1]
@@ -44,7 +44,7 @@ class DotRemover(commands.Cog):
                 dot = dot if dot != '.' else '\.'
                 if re.findall(rf"{dot} *`$", new_text) and new_text.count("`") == 2 and not re.findall(rf"{dot}{dot}{dot} *`$", new_text):
                     # Check if third to last character is a dot
-                    if new_text[-3] == dot:
+                    if len(new_text) > 2 and new_text[-3] == dot:
                         # If it is, remove both dots
                         return re.sub(rf"{dot}{dot} *`$", "`", new_text)
                     return re.sub(rf"{dot} *`$", "`", new_text)
