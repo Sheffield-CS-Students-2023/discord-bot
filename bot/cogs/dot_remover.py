@@ -80,6 +80,7 @@ class DotRemover(commands.Cog):
     async def on_message(self, message: discord.Message):
         """If the last symbol of a message is a dot (unless 3 dots), remove dot, delete message and resend"""
         if message.author.bot: return
+        if self.admin_role in message.author.roles: return # Admin abuse to avoid admin dots being censored (you happy now matt?)
 
         # Figure out if it ends with a single dot and only has one sentence using rege
         if (text := self._find_if_dot(message.content)):
