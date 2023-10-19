@@ -3,10 +3,20 @@ from discord.ext import commands
 import re
 from typing import Union
 
+from bot.static.constants import ROLES, GUILD_ID
+
 class DotRemover(commands.Cog):
 
     def __init__(self, client: commands.Bot):
         self.client = client
+
+    @property
+    def guild(self) -> discord.Guild:
+        return self.client.get_guild(GUILD_ID)
+
+    @property
+    def admin_role(self) -> discord.Role:
+        return self.guild.get_role(ROLES["admin"])
 
     def _remove_whitespace_from_end(self, text: str, dot: str) -> str:
         """Removes all things discord markdown renders as whitespace from the end of the text"""
@@ -86,6 +96,7 @@ class DotRemover(commands.Cog):
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
         """If the last symbol of a message is a dot (unless 3 dots), remove dot, delete message and resend"""
         if before.author.bot: return
+        if self.admin_role in before.author.roles: return # Admin abuse to avoid admin dots being censored (you happy now matt?)
 
         # Figure out if it ends with a single dot and only has one sentence using rege
         if (text := self._find_if_dot(after.content)):
