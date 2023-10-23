@@ -70,6 +70,5 @@ BINGO = [
     "discord is active af",
     "self drawn diagram",
     "asks if we want a break",
-    "mentions waterfall",
     "mentions scrums"
 ]
