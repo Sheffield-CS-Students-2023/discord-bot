@@ -65,11 +65,10 @@ BINGO = [
     "someone goes to sleep in the lecture",
     "mentions \"client\" 5 times",
     "someone plays a game on their laptop",
-    "going back to this bullshit analogy",
     "people leaving during break",
     "discord is active af",
     "self drawn diagram",
     "asks if we want a break",
-    "mentions waterfall",
-    "mentions scrums"
+    "mentions scrums",
+    "Shows some new acronym"
 ]
