@@ -21,7 +21,23 @@ class DotRemover(commands.Cog):
 
     def _remove_whitespace_from_end(self, text: str, dot: str) -> str:
         """Removes all things discord markdown renders as whitespace from the end of the text"""
-        whitespace = [r"_[ \n]*_", "­", r"\|\|[ \n]*\|\|", "\U0000200e"]
+        whitespace = [
+            r"_[ \n]*_", 
+            r"\|\|[ \n]*\|\|", 
+            "\U0000200e",
+            "\U0000200b", 
+            "\U0000200a", 
+            "\U00002006", 
+            "\U00002009", 
+            "\U00002008", 
+            "\U00002005", 
+            "\U00002004", 
+            "\U00002007", 
+            "\U00002002", 
+            "\U00002003", 
+            "\U00002800",
+            "👨🏻‍🚀" # A white space character
+        ]
         dot = dot if dot != '.' else '\.'
         for char in whitespace:
             # Use regex to remove all occurances of char after dot
