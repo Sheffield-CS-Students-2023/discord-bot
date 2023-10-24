@@ -3,11 +3,12 @@ from discord.ext import commands
 import re
 from typing import Union
 
+from bot.bot import Bot
 from bot.static.constants import ROLES, GUILD_ID
 
 class DotRemover(commands.Cog):
 
-    def __init__(self, client: commands.Bot):
+    def __init__(self, client: Bot):
         self.client = client
 
     @property
@@ -20,7 +21,7 @@ class DotRemover(commands.Cog):
 
     def _remove_whitespace_from_end(self, text: str, dot: str) -> str:
         """Removes all things discord markdown renders as whitespace from the end of the text"""
-        whitespace = [r"_[ \n]*_", "­", r"\|\|[ \n]*\|\|"]
+        whitespace = [r"_[ \n]*_", "­", r"\|\|[ \n]*\|\|", "\U0000200e"]
         dot = dot if dot != '.' else '\.'
         for char in whitespace:
             # Use regex to remove all occurances of char after dot
@@ -80,7 +81,7 @@ class DotRemover(commands.Cog):
     async def on_message(self, message: discord.Message):
         """If the last symbol of a message is a dot (unless 3 dots), remove dot, delete message and resend"""
         if message.author.bot: return
-        if self.admin_role in message.author.roles: return # Admin abuse to avoid admin dots being censored (you happy now matt?)
+        if self.admin_role in message.author.roles and not self.client.is_dev: return # Admin abuse to avoid admin dots being censored (you happy now matt?)
 
         # Figure out if it ends with a single dot and only has one sentence using rege
         if (text := self._find_if_dot(message.content)):
@@ -97,7 +98,7 @@ class DotRemover(commands.Cog):
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
         """If the last symbol of a message is a dot (unless 3 dots), remove dot, delete message and resend"""
         if before.author.bot: return
-        if self.admin_role in before.author.roles: return # Admin abuse to avoid admin dots being censored (you happy now matt?)
+        if self.admin_role in before.author.roles and not self.client.is_dev: return # Admin abuse to avoid admin dots being censored (you happy now matt?)
 
         # Figure out if it ends with a single dot and only has one sentence using rege
         if (text := self._find_if_dot(after.content)):
