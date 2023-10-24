@@ -69,6 +69,8 @@ BINGO = [
     "discord is active af",
     "self drawn diagram",
     "asks if we want a break",
+    "mentions waterfall",
     "mentions scrums",
-    "Shows some new acronym"
+    "spends an hour explaining a single point",
+    "uses a bullshit anaology"
 ]

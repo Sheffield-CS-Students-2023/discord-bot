@@ -34,7 +34,7 @@ class DotRemover(commands.Cog):
         """Attempts to find any variations and tricks using markdown, unicode characters etc to discuise a dot at the end of the last sentence in text"""
 
         # Create list of possible unicode characters that look like dots (as characters, not \u+something eg "." not "\u002E")
-        dots = [".", "·", "․", "‧", "⋅", "・", "⸱", "◌ׅ", "ᐧ", "⏺", "●", "⚬", "⦁", "⸰"]
+        dots = [".", "·", "․", "‧", "⋅", "・", "⸱", "◌ׅ", "ᐧ", "⏺", "●", "⚬", "⦁", "⸰", "﹒"]
 
         joined_dots =  "\\" + "".join(dots)
         if len(re.findall(rf"([{joined_dots}] )|([{joined_dots}]$)", text)) > 1: # If the text has more than a single sentence the last dot does not need to be removed.
