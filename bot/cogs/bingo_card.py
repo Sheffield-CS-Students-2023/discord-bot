@@ -46,7 +46,8 @@ class Bingo(commands.Cog):
 
         for i in range(number_of_items):
             if i == floor(number_of_items/2):
-                square_image = self.draw_square("Free Space", font, square_size) # The free space
+                # square_image = self.draw_square("Free Space", font, square_size) # The free space
+                square_image = self.draw_square(chosen_items[i], font, square_size)
             else:
                 square_image = self.draw_square(chosen_items[i], font, square_size)
 
