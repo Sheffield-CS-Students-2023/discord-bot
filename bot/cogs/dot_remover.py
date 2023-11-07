@@ -36,6 +36,10 @@ class DotRemover(commands.Cog):
             "\U00002002", 
             "\U00002003", 
             "\U00002800",
+            "\U0000200c",
+            "\U0000200d",
+            "\U0000200e",
+            "\U00002000"
             "👨🏻‍🚀" # A white space character
         ]
         dot = dot if dot != '.' else '\.'
