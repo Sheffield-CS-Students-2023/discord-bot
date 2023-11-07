@@ -51,7 +51,8 @@ Enjoy!
 
 ROLES = {
     "compsoc": 1149059391753048174,
-    "admin": 1093465256065511546
+    "admin": 1093465256065511546,
+    "dot_defender": 1166491561614385303
 }
 
 BINGO = [
@@ -61,7 +62,6 @@ BINGO = [
     "mentions planes",
     "goes on a 5 min tangent",
     "mentions feedback",
-    "mentions waterfall",
     "someone goes to sleep in the lecture",
     "mentions \"client\" 5 times",
     "someone plays a game on their laptop",
