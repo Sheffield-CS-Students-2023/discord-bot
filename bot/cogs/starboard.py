@@ -40,6 +40,7 @@ class Starboard(commands.Cog):
 
         # If the message has enough stars, send it to the starboard
         if len(data["stars"]) == MIN_STARS and not data["starboard_id"]: # Message has just reached starboard threshold
+            reply = reaction_message.reference.resolved if reaction_message.reference else None
             embed = discord.Embed.from_dict(
                 {
                     "title": str(len(data["stars"])) + " 🌟",
@@ -48,7 +49,7 @@ class Starboard(commands.Cog):
                         "icon_url": reaction_message.author.display_avatar.url if reaction_message.author.display_avatar else discord.DefaultAvatar.blurple
                     },
                     "color": int(discord.Colour.gold()),
-                    "description": (f"<:reply:1176214702754377868> replying to [Message]({reaction_message.reference.jump_url})\n" if reaction_message.reference else "") + reaction_message.content + f"\n\n[Jump to message]({reaction_message.jump_url})",
+                    "description": (f"<:reply:1176214702754377868> replying to [{reply.author.display_name}: {reply.content[:20]}{'...' if len(reply.content) > 20 else ''}]({reaction_message.reference.jump_url})\n" if reply else "") + reaction_message.content + f"\n\n[Jump to message]({reaction_message.jump_url})",
                     "timestamp": reaction_message.created_at.isoformat(),
                 }
             )
