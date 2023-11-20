@@ -48,7 +48,7 @@ class Starboard(commands.Cog):
                         "icon_url": reaction_message.author.display_avatar.url if reaction_message.author.display_avatar else discord.DefaultAvatar.blurple
                     },
                     "color": int(discord.Colour.gold()),
-                    "description": reaction_message.content + f"\n\n[Jump to message]({reaction_message.jump_url})",
+                    "description": (f"<:reply:1176214702754377868> replying to [Message]({reaction_message.reference.jump_url})\n" if reaction_message.reference else "") + reaction_message.content + f"\n\n[Jump to message]({reaction_message.jump_url})",
                     "timestamp": reaction_message.created_at.isoformat(),
                 }
             )
