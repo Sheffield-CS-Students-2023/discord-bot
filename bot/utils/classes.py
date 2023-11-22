@@ -1,4 +1,5 @@
 from typing import List, Optional, Dict, Union
+from random import choice
 
 from bot.static.constants import STARBORD
 
@@ -64,6 +65,11 @@ class Starboard:
     
     def __str__(self):
         return f"Starboard with {len(self.data)} messages"
+    
+    @property
+    def random_star_message_id(self) -> int:
+        """Get a random starboard message id"""
+        return choice([d for d in self.data if d["starboard_id"]])["starboard_id"]
     
     def append(self, value: dict):
         """Add a starboard message to the database"""
