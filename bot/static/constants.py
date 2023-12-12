@@ -55,6 +55,9 @@ ROLES = {
     "dot_defender": 1166491561614385303
 }
 
+CHANNEL_MINECRAFT = 1180893159132237985
+SOCKET = "mc.pretty-s.us"
+
 BINGO = [
     "repeats a slide",
     "mentions testing",

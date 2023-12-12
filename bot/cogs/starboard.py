@@ -26,9 +26,9 @@ class Starboard(commands.Cog):
             # Remove the enire link and replace it wuth "Link" using regex
             reply.content = re.sub(r"http[a-zA-Z0-9._/:]", "Link", reply.content)
 
-        reply_indicator = (f"<:reply:1176214702754377868> replying to [{reply.author.display_name}: {reply.content[:20]}{'...' if len(reply.content) > 20 else ''}]({message.reference.jump_url})\n" if reply else "")
+        reply_indicator = (f"<:reply:1176214702754377868> replying to [{reply.author.display_name}]({message.reference.jump_url}): {reply.content[:20]}{'...' if len(reply.content) > 20 else ''}\n" if reply else "")
 
-        unembeddable_attachment = message.attachments and message.attachments[0].content_type and message.attachments[0].content_type.startswith("image")
+        unembeddable_attachment = message.attachments and message.attachments[0].content_type and not message.attachments[0].content_type.startswith("image")
         attachment_name = f"\n[{message.attachments[0].filename}]({message.attachments[0].url})" if unembeddable_attachment else ""
     
         embed = discord.Embed.from_dict(
@@ -43,9 +43,15 @@ class Starboard(commands.Cog):
                 "timestamp": message.created_at.isoformat(),
             }
         )
-        
+        # Use regex to see if message contains a direct png, jpg or gif link
+
+        attachment_link = re.search(r"(http[a-zA-Z0-9._/:]+(png|jpg|gif))", message.content)
+
         if message.attachments:
             embed.set_image(url=message.attachments[0].url)
+        elif attachment_link:
+            embed.set_image(url=attachment_link.group(0))
+            embed.description = embed.description.replace(attachment_link.group(0), "")
 
         return embed
     
