@@ -77,3 +77,8 @@ BINGO = [
     "spends an hour explaining a single point",
     "uses a bullshit anaology"
 ]
+
+#Who to autorespond to
+RESPONDENTS = [
+    497053611587534859  #jake (fat)
+]
