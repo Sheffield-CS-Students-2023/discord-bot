@@ -8,21 +8,19 @@
 //! features = ["framework", "standard_framework"]
 //! ```
 mod commands;
+mod events;
 
 use std::collections::HashSet;
 use std::env;
 use std::sync::Arc;
 
-use serenity::async_trait;
 use serenity::framework::standard::macros::group;
 use serenity::framework::standard::Configuration;
 use serenity::framework::StandardFramework;
 use serenity::gateway::ShardManager;
 use serenity::http::Http;
-use serenity::model::event::ResumedEvent;
-use serenity::model::gateway::Ready;
 use serenity::prelude::*;
-use tracing::{error, info};
+use tracing::error;
 
 use crate::commands::latex::*;
 
@@ -30,19 +28,6 @@ pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<ShardManager>;
-}
-
-struct Handler;
-
-#[async_trait]
-impl EventHandler for Handler {
-    async fn ready(&self, _: Context, ready: Ready) {
-        info!("Connected as {}", ready.user.name);
-    }
-
-    async fn resume(&self, _: Context, _: ResumedEvent) {
-        info!("Resumed");
-    }
 }
 
 #[group]
@@ -86,7 +71,7 @@ async fn main() {
         | GatewayIntents::MESSAGE_CONTENT;
     let mut client = Client::builder(&token, intents)
         .framework(framework)
-        .event_handler(Handler)
+        .event_handler(events::dot_remover::Handler)
         .await
         .expect("Err creating client");
 
