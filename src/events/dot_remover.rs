@@ -131,10 +131,7 @@ pub fn find_if_dot(text: &str) -> Option<String> {
         StrOrChar::Char('܂'),
     ];
 
-    let mut joined_dots = String::new();
-    for dot in DOTS.iter() {
-        joined_dots += &dot.to_string();
-    }   
+	let joined_dots: String = DOTS.into_iter().map(|c| c.to_string()).collect();
 
     let re = Regex::new(
         &format!(r"([{joined_dots}] )|([{joined_dots}]$)", 
