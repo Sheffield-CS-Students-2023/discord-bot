@@ -7,6 +7,7 @@ use events::dot_remover::find_if_dot;
 #[cfg(test)]
 mod tests {
     use super::*;
+    const INVISIBLE_CHAR: char = '\u{2000}';
 
     #[test]
     fn no_dot_normal() {
@@ -69,12 +70,36 @@ mod tests {
     fn invisible_char_after_dot() {
         // there are probably too many to get all cases but there was
         // an attempt
-        assert_eq!(find_if_dot(&format!("text.{}", '\u{2000}')), Some(String::from("text")));
+        assert_eq!(
+            find_if_dot(&format!("text.{}", INVISIBLE_CHAR)), 
+            Some(String::from("text"))
+        );
     }
 
     #[test]
     fn markdown_invisible_after_dot() {
         // Discord renders some markdown invisible, like _ _
         assert_eq!(find_if_dot("text._ _"), Some(String::from("text")));
+    }
+
+    #[test]
+    fn multiple_cases_1() {
+        assert_eq!(find_if_dot("text․ _ _"), Some(String::from("text")));
+    }
+
+    #[test]
+    fn multiple_cases_2() {
+        assert_eq!(
+            find_if_dot(&format!("`text.` _ _{}", INVISIBLE_CHAR)), 
+            Some(String::from("`text`"))
+        );
+    }
+
+    #[test]
+    fn multiple_cases_3() {
+        assert_eq!(
+            find_if_dot(&format!("text._._{0}{0}", INVISIBLE_CHAR)), 
+            Some(String::from("text"))
+        );
     }
 }
