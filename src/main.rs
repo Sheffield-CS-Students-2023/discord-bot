@@ -1,12 +1,3 @@
-//! Requires the 'framework' feature flag be enabled in your project's `Cargo.toml`.
-//!
-//! This can be enabled by specifying the feature in the dependency section:
-//!
-//! ```toml
-//! [dependencies.serenity]
-//! git = "https://github.com/serenity-rs/serenity.git"
-//! features = ["framework", "standard_framework"]
-//! ```
 mod commands;
 mod events;
 
@@ -23,6 +14,7 @@ use serenity::prelude::*;
 use tracing::error;
 
 use crate::commands::latex::*;
+use crate::commands::eval::*;
 
 pub struct ShardManagerContainer;
 
@@ -31,7 +23,7 @@ impl TypeMapKey for ShardManagerContainer {
 }
 
 #[group]
-#[commands(latex)]
+#[commands(latex, eval)]
 struct General;
 
 #[tokio::main]
