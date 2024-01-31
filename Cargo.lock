@@ -882,7 +882,10 @@ version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "445ba825b27408685aaecefd65178908c36c6e96aaf6d8599419d46e624192ba"
 dependencies = [
+ "fastrand 2.0.1",
  "futures-core",
+ "futures-io",
+ "parking",
  "pin-project-lite",
 ]
 
@@ -2254,10 +2257,13 @@ name = "sheffbot"
 version = "0.1.0"
 dependencies = [
  "dotenv",
+ "futures-lite 2.2.0",
  "mongodb",
  "phf",
+ "rand",
  "regex",
  "reqwest",
+ "serde",
  "serenity",
  "tokio",
  "tracing",

@@ -6,7 +6,7 @@ use serenity::builder::ExecuteWebhook;
 use serenity::builder::CreateWebhook;
 use regex::Regex;
 
-pub struct Handler;
+pub struct DotHandler;
 
 enum StrOrChar<T: AsRef<str>> {
     Str(T),
@@ -328,7 +328,7 @@ pub fn find_if_dot(text: &str) -> Option<std::string::String> {
 
 
 #[async_trait]
-impl EventHandler for Handler {
+impl EventHandler for DotHandler {
 
     async fn message(&self, ctx: Context, msg: Message) {
         // Check if message is from bot
@@ -439,4 +439,104 @@ impl EventHandler for Handler {
         }
     }
 
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    const INVISIBLE_CHAR: char = '\u{2000}';
+
+    #[test]
+    fn no_dot_normal() {
+        assert_eq!(find_if_dot("text"), None);
+    }
+
+    #[test]
+    fn ignore_codeblocks() {
+        assert_eq!(find_if_dot("```\ntext\n```"), None);
+    }
+
+    #[test]
+    fn ignore_three_dots() {
+        assert_eq!(find_if_dot("text..."), None);
+    }
+
+    #[test]
+    fn ignore_multi_sentences() {
+        assert_eq!(find_if_dot("text. more text."), None);
+    }
+
+    #[test]
+    fn dot_normal() {
+        assert_eq!(find_if_dot("text."), Some(String::from("text")));
+    }
+
+    #[test]
+    fn two_dots_normal() {
+        // This could be used to trick the algorithm in removing one dot
+        // but leaving the second one in
+        assert_eq!(find_if_dot("text.."), Some(String::from("text")))
+    }
+
+    #[test]
+    fn dot_single_line_code() {
+        assert_eq!(find_if_dot("`text.`"), Some(String::from("`text`")));
+    }
+
+    #[test]
+    fn dot_surrounded() {
+        assert_eq!(find_if_dot("text`.`"), Some(String::from("text")));
+    }
+
+    #[test]
+    fn unicode_dot() {
+        // there are probably too many to get all cases but there was
+        // an attempt
+        assert_eq!(find_if_dot("text⸱"), Some(String::from("text")));
+    }
+
+    #[test]
+    fn special_unicode_dot() {
+        // A multiple byte unicode dot can be used
+        // to cause an error in the algorithm
+        // if string indexing is used
+        assert_eq!(find_if_dot("text․"), Some(String::from("text")))
+    }
+
+    #[test]
+    fn invisible_char_after_dot() {
+        // there are probably too many to get all cases but there was
+        // an attempt
+        assert_eq!(
+            find_if_dot(&format!("text.{}", INVISIBLE_CHAR)), 
+            Some(String::from("text"))
+        );
+    }
+
+    #[test]
+    fn markdown_invisible_after_dot() {
+        // Discord renders some markdown invisible, like _ _
+        assert_eq!(find_if_dot("text._ _"), Some(String::from("text")));
+    }
+
+    #[test]
+    fn multiple_cases_1() {
+        assert_eq!(find_if_dot("text․ _ _"), Some(String::from("text")));
+    }
+
+    #[test]
+    fn multiple_cases_2() {
+        assert_eq!(
+            find_if_dot(&format!("`text.` _ _{}", INVISIBLE_CHAR)), 
+            Some(String::from("`text`"))
+        );
+    }
+
+    #[test]
+    fn multiple_cases_3() {
+        assert_eq!(
+            find_if_dot(&format!("text._._{0}{0}", INVISIBLE_CHAR)), 
+            Some(String::from("text"))
+        );
+    }
 }

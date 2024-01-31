@@ -1,5 +1,6 @@
 mod commands;
 mod events;
+mod structures;
 
 use std::collections::HashSet;
 use std::env;
@@ -15,11 +16,18 @@ use tracing::error;
 
 use crate::commands::latex::*;
 use crate::commands::eval::*;
+use crate::structures::starboard::Starboard;
 
 pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<ShardManager>;
+}
+
+pub struct MongoClient;
+
+impl TypeMapKey for MongoClient {
+    type Value = mongodb::Client;
 }
 
 #[group]
@@ -63,13 +71,18 @@ async fn main() {
         | GatewayIntents::MESSAGE_CONTENT;
     let mut client = Client::builder(&token, intents)
         .framework(framework)
-        .event_handler(events::dot_remover::Handler)
+        .event_handler(events::star::StarHandler)
+        .event_handler(events::dot_remover::DotHandler)
         .await
         .expect("Err creating client");
 
     {
         let mut data = client.data.write().await;
         data.insert::<ShardManagerContainer>(client.shard_manager.clone());
+        data.insert::<MongoClient>(mongodb::Client::with_uri_str(
+            &env::var("MONGO_URI")
+                .unwrap()
+        ).await.unwrap());
     }
 
     let shard_manager = client.shard_manager.clone();
