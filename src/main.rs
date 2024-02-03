@@ -14,20 +14,15 @@ use serenity::http::Http;
 use serenity::prelude::*;
 use tracing::error;
 
-use crate::commands::latex::*;
 use crate::commands::eval::*;
+use crate::commands::latex::*;
 use crate::structures::starboard::Starboard;
+use crate::events::star::MongoClient;
 
 pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<ShardManager>;
-}
-
-pub struct MongoClient;
-
-impl TypeMapKey for MongoClient {
-    type Value = mongodb::Client;
 }
 
 #[group]
@@ -58,7 +53,7 @@ async fn main() {
             }
 
             (owners, info.id)
-        },
+        }
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
@@ -69,7 +64,7 @@ async fn main() {
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
         | GatewayIntents::MESSAGE_CONTENT
-		| GatewayIntents::GUILD_MESSAGE_REACTIONS;
+        | GatewayIntents::GUILD_MESSAGE_REACTIONS;
     let mut client = Client::builder(&token, intents)
         .framework(framework)
         .event_handler(events::star::StarHandler)
@@ -80,16 +75,19 @@ async fn main() {
     {
         let mut data = client.data.write().await;
         data.insert::<ShardManagerContainer>(client.shard_manager.clone());
-        data.insert::<MongoClient>(mongodb::Client::with_uri_str(
-            &env::var("MONGO_URI")
-                .unwrap()
-        ).await.unwrap());
+        data.insert::<MongoClient>(
+            mongodb::Client::with_uri_str(&env::var("MONGO_URI").unwrap())
+                .await
+                .unwrap(),
+        );
     }
 
     let shard_manager = client.shard_manager.clone();
 
     tokio::spawn(async move {
-        tokio::signal::ctrl_c().await.expect("Could not register ctrl+c handler");
+        tokio::signal::ctrl_c()
+            .await
+            .expect("Could not register ctrl+c handler");
         shard_manager.shutdown_all().await;
     });
 

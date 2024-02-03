@@ -1,12 +1,12 @@
-use serenity::framework::standard::macros::command;
-use serenity::framework::standard::{Args, CommandResult};
-use serenity::model::prelude::*;
-use serenity::{prelude::*, json};
-use serenity::json::json;
-use reqwest::Client;
-use reqwest::header::{HeaderMap, HeaderValue};
 use phf::phf_map;
 use regex::Regex;
+use reqwest::header::{HeaderMap, HeaderValue};
+use reqwest::Client;
+use serenity::framework::standard::macros::command;
+use serenity::framework::standard::{Args, CommandResult};
+use serenity::json::json;
+use serenity::model::prelude::*;
+use serenity::{json, prelude::*};
 use std::env;
 
 const EVAL_LANGS: phf::Map<&'static str, &'static str> = phf_map! {
@@ -18,7 +18,7 @@ const EVAL_LANGS: phf::Map<&'static str, &'static str> = phf_map! {
     "c++" => "c_cpp",
     "cpp" => "c_cpp",
 };
-const ALL_LANGS: [&str; 16]= [
+const ALL_LANGS: [&str; 16] = [
     "php",
     "python",
     "c",
@@ -34,7 +34,7 @@ const ALL_LANGS: [&str; 16]= [
     "perl",
     "swift",
     "fortran",
-    "bash"
+    "bash",
 ];
 
 #[command]
@@ -58,10 +58,7 @@ pub async fn eval(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
 
     // If language is invalid, return
     if !ALL_LANGS.contains(&lang) {
-        msg.channel_id.say(
-            &ctx.http, 
-            "Invalid language"
-        ).await?;
+        msg.channel_id.say(&ctx.http, "Invalid language").await?;
         return Ok(());
     }
 
@@ -73,12 +70,23 @@ pub async fn eval(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
     });
 
     let mut header = HeaderMap::new();
-    header.insert("content-type", HeaderValue::from_str("application/json").unwrap());
+    header.insert(
+        "content-type",
+        HeaderValue::from_str("application/json").unwrap(),
+    );
     header.insert("x-compile", HeaderValue::from_str("rapidapi").unwrap());
-    header.insert("Content-Type", HeaderValue::from_str("application/json").unwrap());
-    header.insert("X-RapidAPI-Key", HeaderValue::from_str(&env::var("API_TOKEN").unwrap()).unwrap());
-    header.insert("X-RapidAPI-Host", HeaderValue::from_str("code-compiler10.p.rapidapi.com").unwrap());
-
+    header.insert(
+        "Content-Type",
+        HeaderValue::from_str("application/json").unwrap(),
+    );
+    header.insert(
+        "X-RapidAPI-Key",
+        HeaderValue::from_str(&env::var("API_TOKEN").unwrap()).unwrap(),
+    );
+    header.insert(
+        "X-RapidAPI-Host",
+        HeaderValue::from_str("code-compiler10.p.rapidapi.com").unwrap(),
+    );
 
     // Create an async web request
     let response = Client::new()
@@ -90,10 +98,13 @@ pub async fn eval(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
 
     // Check if the request was successful
     if !response.status().is_success() {
-        let _ = msg.channel_id.say(
-            &ctx.http, 
-            format!("The following error occured: {}", response.text().await?)
-        ).await;
+        let _ = msg
+            .channel_id
+            .say(
+                &ctx.http,
+                format!("The following error occured: {}", response.text().await?),
+            )
+            .await;
         return Ok(());
     }
 
@@ -107,10 +118,9 @@ pub async fn eval(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
     }
 
     // Send the response
-    msg.channel_id.say(
-        &ctx.http, 
-        format!("```{}\n{}```", lang, output)
-    ).await?;
+    msg.channel_id
+        .say(&ctx.http, format!("```{}\n{}```", lang, output))
+        .await?;
 
     Ok(())
 }

@@ -1,8 +1,8 @@
-use serenity::prelude::*;
+use crate::structures::starboard::Starboard;
+use serenity::all::{ChannelId, CreateEmbed, CreateEmbedAuthor, Message, Reaction, ReactionType};
 use serenity::async_trait;
 use serenity::builder::EditMessage;
-use serenity::all::{Message, Reaction, ReactionType, CreateEmbed, CreateEmbedAuthor, ChannelId};
-use crate::structures::starboard::Starboard;
+use serenity::prelude::*;
 
 const MIN_STARS: usize = 3;
 const STARBOARD_CHANNEL_ID: u64 = 1201172163613433987;
@@ -35,10 +35,26 @@ fn make_starboard_embed(message: &Message) -> CreateEmbed {
     };
 
     let mut embed = CreateEmbed::default()
-        .title(format!("{} 🌟", message.reactions.iter().filter(|r| r.reaction_type == ReactionType::Unicode("⭐".to_string())).count()))
-        .author(CreateEmbedAuthor::new(&message.author.name).icon_url(&message.author.avatar_url().unwrap_or_default()))
+        .title(format!(
+            "{} 🌟",
+            message
+                .reactions
+                .iter()
+                .filter(|r| r.reaction_type == ReactionType::Unicode("⭐".to_string()))
+                .count()
+        ))
+        .author(
+            CreateEmbedAuthor::new(&message.author.name)
+                .icon_url(&message.author.avatar_url().unwrap_or_default()),
+        )
         .color(0xFFD700)
-        .description(format!("{}{}{}\n\n[Jump to message]({})", reply_indicator, message.content, attachment_name, message.link()))
+        .description(format!(
+            "{}{}{}\n\n[Jump to message]({})",
+            reply_indicator,
+            message.content,
+            attachment_name,
+            message.link()
+        ))
         .timestamp(&message.timestamp);
 
     if let Some(attachment) = message.attachments.first() {
@@ -53,7 +69,7 @@ fn make_starboard_embed(message: &Message) -> CreateEmbed {
 #[async_trait]
 impl EventHandler for StarHandler {
     // When a message is reacted to
-    
+
     async fn reaction_add(&self, ctx: Context, reaction: Reaction) {
         if reaction.emoji != ReactionType::Unicode("⭐".to_string()) {
             return;
@@ -69,34 +85,60 @@ impl EventHandler for StarHandler {
             Ok(channel) => channel,
             Err(_) => return,
         };
-        let reaction_message = match reaction_channel.id().message(&ctx.http, reaction.message_id).await {
+        let reaction_message = match reaction_channel
+            .id()
+            .message(&ctx.http, reaction.message_id)
+            .await
+        {
             Ok(message) => message,
             Err(_) => return,
         };
 
         // Add a star to the starboard
-        let data = starboard.add_star(
-            reaction.message_id.into(), 
-            reaction.user_id.unwrap().into(), 
-            reaction_message.author.id.into()
-        ).await;
+        let data = starboard
+            .add_star(
+                reaction.message_id.into(),
+                reaction.user_id.unwrap().into(),
+                reaction_message.author.id.into(),
+            )
+            .await;
 
         // If the message has enough stars, send it to the starboard
-        if data.stars.len() == MIN_STARS && data.starboard_id.is_none() { // Message has just reached starboard threshold
+        if data.stars.len() == MIN_STARS && data.starboard_id.is_none() {
+            // Message has just reached starboard threshold
             let embed = make_starboard_embed(&reaction_message);
 
-            let mut message = reaction_channel.id().say(&ctx.http, &reaction_message.channel_id.mention().to_string()).await.unwrap();
-            message.edit(&ctx.http, EditMessage::new().embed(embed)).await.unwrap();
-            starboard.update_starboard_message(data.id, message.id.into()).await;
-            channel.say(&ctx.http, embed).await.unwrap();
+            let mut message = reaction_channel
+                .id()
+                .say(
+                    &ctx.http,
+                    &reaction_message.channel_id.mention().to_string(),
+                )
+                .await
+                .unwrap();
+            message
+                .edit(&ctx.http, EditMessage::new().embed(embed))
+                .await
+                .unwrap();
+            starboard
+                .update_starboard_message(data.id, message.id.into())
+                .await;
+            // channel.say(&ctx.http, embed).await.unwrap();
         } else if data.stars.len() >= MIN_STARS {
             // Edit the starboard message to reflect the new amount of stars
-            let mut message = reaction_channel.id().message(&ctx.http, data.starboard_id.unwrap() as u64).await.unwrap();
+            let mut message = reaction_channel
+                .id()
+                .message(&ctx.http, data.starboard_id.unwrap() as u64)
+                .await
+                .unwrap();
             let mut embed = message.embeds.first().unwrap().clone();
             embed.title = Some(format!("{} 🌟", data.stars.len()));
-            message.edit(&ctx.http, EditMessage::new().embed(embed.into())).await.unwrap();
+            message
+                .edit(&ctx.http, EditMessage::new().embed(embed.into()))
+                .await
+                .unwrap();
         }
-    } 
+    }
 
     async fn reaction_remove(&self, ctx: Context, reaction: Reaction) {
         if reaction.emoji != ReactionType::Unicode("⭐".to_string()) {
@@ -111,10 +153,9 @@ impl EventHandler for StarHandler {
         let starboard = Starboard::new(client).await;
 
         // Remove a star from the starboard
-        let data = starboard.remove_star(
-            reaction.message_id.into(), 
-            reaction.user_id.unwrap().into()
-        ).await;
+        let data = starboard
+            .remove_star(reaction.message_id.into(), reaction.user_id.unwrap().into())
+            .await;
 
         if data.is_none() {
             return;
@@ -125,11 +166,18 @@ impl EventHandler for StarHandler {
         }
 
         // Edit the starboard message to reflect the new amount of stars
-        let mut message = channel.message(&ctx.http, data.clone().unwrap().starboard_id.unwrap() as u64).await.unwrap();
+        let mut message = channel
+            .message(
+                &ctx.http,
+                data.clone().unwrap().starboard_id.unwrap() as u64,
+            )
+            .await
+            .unwrap();
         let mut embed = message.embeds.first().unwrap().clone();
         embed.title = Some(format!("{} 🌟", data.unwrap().stars.len()));
-        message.edit(&ctx.http, EditMessage::new().embed(embed.into())).await.unwrap();
-
+        message
+            .edit(&ctx.http, EditMessage::new().embed(embed.into()))
+            .await
+            .unwrap();
     }
-        
 }
