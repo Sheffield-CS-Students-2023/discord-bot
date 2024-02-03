@@ -68,7 +68,8 @@ async fn main() {
 
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES
-        | GatewayIntents::MESSAGE_CONTENT;
+        | GatewayIntents::MESSAGE_CONTENT
+		| GatewayIntents::GUILD_MESSAGE_REACTIONS;
     let mut client = Client::builder(&token, intents)
         .framework(framework)
         .event_handler(events::star::StarHandler)
