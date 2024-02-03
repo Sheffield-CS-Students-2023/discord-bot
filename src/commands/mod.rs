@@ -1,2 +1,2 @@
-pub mod latex;
 pub mod eval;
+pub mod latex;

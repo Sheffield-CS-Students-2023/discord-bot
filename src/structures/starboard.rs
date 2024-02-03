@@ -1,9 +1,9 @@
 use crate::MongoClient;
-use mongodb::bson::{doc, Bson, from_bson};
+use futures_lite::stream::StreamExt;
+use mongodb::bson::{doc, from_bson, Bson};
 use mongodb::Client;
 use rand::seq::SliceRandom;
-use futures_lite::stream::StreamExt;
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StarStruct {
@@ -55,19 +55,27 @@ impl Starboard {
 
     pub async fn add_star(&self, id: i64, user_id: i64, author_id: i64) -> StarStruct {
         let mut cursor = self.collection.find(doc! {"_id": id}, None).await.unwrap();
-        let doc = cursor.next().await.unwrap();
-        if !doc.is_ok() {
+        let doc = cursor.next().await;
+
+        // doc is None if it's the first star added to the message
+        let Some(doc) = doc else {
             let doc = doc! {
-                "_id": id,
+                "id": id,
                 "stars": [user_id],
                 "starboard_id": None::<i64>,
                 "author_id": author_id,
             };
             self.collection.insert_one(&doc, None).await.unwrap();
             return from_bson(Bson::Document(doc)).unwrap();
-        }
+        };
+
         let doc = doc.unwrap();
-        let mut stars = doc.get_array("stars").unwrap().iter().map(|x| x.as_i64().unwrap()).collect::<Vec<i64>>();
+        let mut stars = doc
+            .get_array("stars")
+            .unwrap()
+            .iter()
+            .map(|x| x.as_i64().unwrap())
+            .collect::<Vec<i64>>();
         stars.push(user_id);
         let doc = doc! {
             "_id": id,
@@ -75,7 +83,10 @@ impl Starboard {
             "starboard_id": doc.get_i64("starboard_id").unwrap(),
             "author_id": author_id,
         };
-        self.collection.update_one(doc! {"_id": id}, doc! {"$set": &doc}, None).await.unwrap();
+        self.collection
+            .update_one(doc! {"_id": id}, doc! {"$set": &doc}, None)
+            .await
+            .unwrap();
         from_bson(Bson::Document(doc)).unwrap()
     }
 
@@ -86,7 +97,12 @@ impl Starboard {
             return None;
         }
         let doc = doc.unwrap();
-        let mut stars = doc.get_array("stars").unwrap().iter().map(|x| x.as_i64().unwrap()).collect::<Vec<i64>>();
+        let mut stars = doc
+            .get_array("stars")
+            .unwrap()
+            .iter()
+            .map(|x| x.as_i64().unwrap())
+            .collect::<Vec<i64>>();
         stars.retain(|x| *x != user_id);
         let doc = doc! {
             "_id": id,
@@ -94,12 +110,19 @@ impl Starboard {
             "starboard_id": doc.get_i64("starboard_id").unwrap(),
             "author_id": doc.get_i64("author_id").unwrap(),
         };
-        self.collection.update_one(doc! {"_id": id}, doc! {"$set": &doc}, None).await.unwrap();
+        self.collection
+            .update_one(doc! {"_id": id}, doc! {"$set": &doc}, None)
+            .await
+            .unwrap();
         Some(from_bson(Bson::Document(doc)).unwrap())
     }
 
     pub async fn get_random_star_message_id(&self) -> Option<i64> {
-        let mut cursor = self.collection.find(doc! {"starboard_id": {"$ne": None::<i64>}}, None).await.unwrap();
+        let mut cursor = self
+            .collection
+            .find(doc! {"starboard_id": {"$ne": None::<i64>}}, None)
+            .await
+            .unwrap();
         let mut docs = Vec::new();
         while let Some(doc) = cursor.next().await {
             if !doc.is_ok() {
@@ -112,6 +135,13 @@ impl Starboard {
     }
 
     pub async fn update_starboard_message(&self, id: i64, starboard_id: i64) {
-        self.collection.update_one(doc! {"_id": id}, doc! {"$set": {"starboard_id": starboard_id}}, None).await.unwrap();
+        self.collection
+            .update_one(
+                doc! {"_id": id},
+                doc! {"$set": {"starboard_id": starboard_id}},
+                None,
+            )
+            .await
+            .unwrap();
     }
 }
