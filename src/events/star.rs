@@ -6,8 +6,8 @@ use serenity::all::{
 use serenity::async_trait;
 use serenity::prelude::*;
 
-const MIN_STARS: usize = 2;
-pub const STARBOARD_CHANNEL_ID: u64 = 1201172163613433987;
+const MIN_STARS: usize = 3;
+pub const STARBOARD_CHANNEL_ID: u64 = 1162423699455090748;
 
 pub struct MongoClient;
 
