@@ -58,8 +58,11 @@ async fn main() {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![eval::eval(), latex::latex(), randomstar::randomstar()],
-            prefix_options: PrefixFrameworkOptions::default(),
+            commands: vec![eval::eval(), latex::latex(), randomstar::randomstar(), bingo::bingo()],
+            prefix_options: poise::PrefixFrameworkOptions {
+                prefix: Some("!".into()),
+                ..Default::default()
+            },
             ..Default::default()
         })
         .setup(|ctx, _ready, framework| {

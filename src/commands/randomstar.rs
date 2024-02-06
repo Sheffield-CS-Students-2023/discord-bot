@@ -2,8 +2,7 @@ use crate::events::star::STARBOARD_CHANNEL_ID;
 use crate::structures::starboard::Starboard;
 use crate::MongoClient;
 use crate::{Context, Error};
-use poise::command;
-use poise::CreateReply;
+use poise::{CreateReply, command};
 use serenity::builder::CreateEmbed;
 use serenity::model::id::{ChannelId, MessageId};
 
