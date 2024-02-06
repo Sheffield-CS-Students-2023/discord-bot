@@ -1,27 +1,15 @@
 use futures_lite::stream::StreamExt;
-use mongodb::bson::{doc, from_bson, Bson};
+use mongodb::bson::{doc, from_bson, to_document, Bson};
 use mongodb::Client;
 use rand::seq::SliceRandom;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct StarStruct {
     pub _id: i64,
     pub stars: Vec<i64>,
     pub starboard_id: Option<i64>,
     pub author_id: i64,
-}
-
-// Implement Clone for StarStruct
-impl Clone for StarStruct {
-    fn clone(&self) -> Self {
-        Self {
-            _id: self._id,
-            stars: self.stars.clone(),
-            starboard_id: self.starboard_id,
-            author_id: self.author_id,
-        }
-    }
 }
 
 // Create a starboard class
@@ -38,10 +26,9 @@ impl Starboard {
 
     pub async fn add_star(&self, id: i64, user_id: i64, author_id: i64) -> StarStruct {
         let mut cursor = self.collection.find(doc! {"_id": id}, None).await.unwrap();
-        let doc = cursor.next().await;
 
-        // doc is None if it's the first star added to the message
-        let Some(doc) = doc else {
+        // cursor.next() is None if it's the first star added to the message
+        let Some(doc) = cursor.next().await else {
             let doc = doc! {
                 "_id": id,
                 "stars": [user_id],
@@ -60,26 +47,29 @@ impl Starboard {
             .map(|x| x.as_i64().unwrap())
             .collect::<Vec<i64>>();
         stars.push(user_id);
-        let doc = doc! {
-            "_id": id,
-            "stars": stars,
-            "starboard_id": doc.get("starboard_id"),
-            "author_id": author_id,
+        let star_struct = StarStruct {
+            _id: id,
+            stars,
+            starboard_id: doc.get_i64("starboard_id").ok(),
+            author_id,
         };
+
         self.collection
-            .update_one(doc! {"_id": id}, doc! {"$set": &doc}, None)
+            .update_one(
+                doc! {"_id": id},
+                doc! {"$set": &to_document(&star_struct).unwrap()},
+                None,
+            )
             .await
             .unwrap();
-        from_bson(Bson::Document(doc)).unwrap()
+
+        star_struct
     }
 
     pub async fn remove_star(&self, id: i64, user_id: i64) -> Option<StarStruct> {
         let mut cursor = self.collection.find(doc! {"_id": id}, None).await.unwrap();
-        let doc = cursor.next().await.unwrap();
-        if !doc.is_ok() {
-            return None;
-        }
-        let doc = doc.unwrap();
+        let doc = cursor.next().await.unwrap().ok()?;
+
         let mut stars = doc
             .get_array("stars")
             .unwrap()
@@ -87,17 +77,24 @@ impl Starboard {
             .map(|x| x.as_i64().unwrap())
             .collect::<Vec<i64>>();
         stars.retain(|x| *x != user_id);
-        let doc = doc! {
-            "_id": id,
-            "stars": stars,
-            "starboard_id": doc.get_i64("starboard_id").unwrap(),
-            "author_id": doc.get_i64("author_id").unwrap(),
+
+        let star_struct = StarStruct {
+            _id: id,
+            stars,
+            starboard_id: doc.get_i64("starboard_id").ok(),
+            author_id: doc.get_i64("author_id").unwrap(),
         };
+
         self.collection
-            .update_one(doc! {"_id": id}, doc! {"$set": &doc}, None)
+            .update_one(
+                doc! {"_id": id},
+                doc! {"$set": &to_document(&star_struct).unwrap()},
+                None,
+            )
             .await
             .unwrap();
-        Some(from_bson(Bson::Document(doc)).unwrap())
+
+        Some(star_struct)
     }
 
     pub async fn get_random_star_message_id(&self) -> Option<i64> {
@@ -107,11 +104,11 @@ impl Starboard {
             .await
             .unwrap();
         let mut docs = Vec::new();
+
         while let Some(doc) = cursor.next().await {
-            if !doc.is_ok() {
+            let Ok(doc) = doc else {
                 continue;
-            }
-            let doc = doc.unwrap();
+            };
             docs.push(doc.get_i64("starboard_id").unwrap());
         }
         docs.choose(&mut rand::thread_rng()).map(|x| *x)
