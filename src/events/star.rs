@@ -43,7 +43,8 @@ fn make_starboard_embed(message: &Message) -> CreateEmbed {
                 .reactions
                 .iter()
                 .filter(|r| r.reaction_type == ReactionType::Unicode("⭐".to_string()))
-                .count() + 1
+                .count()
+                + 1
         ))
         .author(
             CreateEmbedAuthor::new(&message.author.name)
@@ -83,17 +84,16 @@ impl EventHandler for StarHandler {
 
         let starboard = Starboard::new(client).await;
 
-        let reaction_channel = match reaction.channel_id.to_channel(&ctx).await {
-            Ok(channel) => channel,
-            Err(_) => return,
+        let Ok(reaction_channel) = reaction.channel_id.to_channel(&ctx).await else {
+            return;
         };
-        let reaction_message = match reaction_channel
+
+        let Ok(reaction_message) = reaction_channel
             .id()
             .message(&ctx.http, reaction.message_id)
             .await
-        {
-            Ok(message) => message,
-            Err(_) => return,
+        else {
+            return;
         };
 
         // Add a star to the starboard
