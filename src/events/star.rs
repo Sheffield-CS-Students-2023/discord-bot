@@ -84,17 +84,16 @@ impl EventHandler for StarHandler {
 
         let starboard = Starboard::new(client).await;
 
-        let reaction_channel = match reaction.channel_id.to_channel(&ctx).await {
-            Ok(channel) => channel,
-            Err(_) => return,
+        let Ok(reaction_channel) = reaction.channel_id.to_channel(&ctx).await else {
+            return;
         };
-        let reaction_message = match reaction_channel
+
+        let Ok(reaction_message) = reaction_channel
             .id()
             .message(&ctx.http, reaction.message_id)
             .await
-        {
-            Ok(message) => message,
-            Err(_) => return,
+        else {
+            return;
         };
 
         // Add a star to the starboard
