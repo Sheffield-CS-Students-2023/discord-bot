@@ -1,12 +1,12 @@
+use crate::{Context, Error};
 use image::{ImageBuffer, Rgba};
+use imageproc::drawing::draw_text_mut;
+use poise::{command, CreateReply};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use crate::{Context, Error};
-use poise::{command, CreateReply};
+use rusttype::{Font, Scale};
 use serenity::all::CreateAttachment;
 use std::io::Cursor;
-use imageproc::drawing::draw_text_mut;
-use rusttype::{Font, Scale};
 
 fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
     // Constants for bingo card dimensions
@@ -53,8 +53,19 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
             let font = Vec::from(include_bytes!("Arial.ttf") as &[u8]);
             let font = Font::try_from_vec(font).expect("Failed to load font file");
             let scale = Scale::uniform(20.0); // Adjust text size as needed
-            let offset = ((CELL_SIZE - (cell.len() as u32 * 10)) / 2, (CELL_SIZE - 20) / 2); // Adjust offset based on text size
-            draw_text_mut(&mut img, Rgba([0u8, 0u8, 0u8, 255u8]), x as i32 + offset.0 as i32, y as i32 + offset.1 as i32, scale, &font, cell);
+            let offset = (
+                (CELL_SIZE - (cell.len() as u32 * 10)) / 2,
+                (CELL_SIZE - 20) / 2,
+            ); // Adjust offset based on text size
+            draw_text_mut(
+                &mut img,
+                Rgba([0u8, 0u8, 0u8, 255u8]),
+                x as i32 + offset.0 as i32,
+                y as i32 + offset.1 as i32,
+                scale,
+                &font,
+                cell,
+            );
         }
     }
 
@@ -107,49 +118,20 @@ fn create_bingo_card(items: Vec<&str>) -> Vec<Vec<&str>> {
     bingo_card
 }
 
-
 #[command(prefix_command)]
 pub async fn bingo(ctx: Context<'_>) -> Result<(), Error> {
     println!("Bingo command");
     let items = vec![
-        "A",
-        "B",
-        "C",
-        "D",
-        "E",
-        "F",
-        "G",
-        "H",
-        "I",
-        "J",
-        "K",
-        "L",
-        "M",
-        "N",
-        "O",
-        "P",
-        "Q",
-        "R",
-        "S",
-        "T",
-        "U",
-        "V",
-        "W",
-        "X",
-        "Y",
-        "Z",
+        "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R",
+        "S", "T", "U", "V", "W", "X", "Y", "Z",
     ];
 
     let bingo_card = create_bingo_card(items);
     let img = generate_bingo_card(bingo_card);
 
     let reply = CreateReply::default()
-        .attachment(
-            CreateAttachment::bytes(
-                img,
-                "bingo.png".to_string(),
-            )
-        ).content("Your bingo card");
+        .attachment(CreateAttachment::bytes(img, "bingo.png".to_string()))
+        .content("Your bingo card");
 
     ctx.send(reply).await?;
 

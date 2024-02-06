@@ -95,11 +95,12 @@ pub async fn eval(ctx: Context<'_>, lang: String, #[rest] code: String) -> Resul
 
     // Check if the request was successful
     if !response.status().is_success() {
-        let _ = ctx.say(format!(
-            "The following error occured: {}",
-            response.text().await?
-        ))
-        .await;
+        let _ = ctx
+            .say(format!(
+                "The following error occured: {}",
+                response.text().await?
+            ))
+            .await;
         return Ok(());
     }
 

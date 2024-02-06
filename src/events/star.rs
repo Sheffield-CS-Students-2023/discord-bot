@@ -43,7 +43,8 @@ fn make_starboard_embed(message: &Message) -> CreateEmbed {
                 .reactions
                 .iter()
                 .filter(|r| r.reaction_type == ReactionType::Unicode("⭐".to_string()))
-                .count() + 1
+                .count()
+                + 1
         ))
         .author(
             CreateEmbedAuthor::new(&message.author.name)
