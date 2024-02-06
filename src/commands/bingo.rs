@@ -10,7 +10,7 @@ use std::io::Cursor;
 
 fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
     // Constants for bingo card dimensions
-    const CELL_SIZE: u32 = 50;
+    const CELL_SIZE: u32 = 150;
     const CARD_WIDTH: u32 = 5 * CELL_SIZE;
     const CARD_HEIGHT: u32 = 5 * CELL_SIZE;
     const BORDER_WIDTH: u32 = 2;
