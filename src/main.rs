@@ -6,28 +6,27 @@ use std::collections::HashSet;
 use std::env;
 use std::sync::Arc;
 
-use serenity::framework::standard::macros::group;
-use serenity::framework::standard::Configuration;
-use serenity::framework::StandardFramework;
+use crate::events::star::MongoClient;
+use poise::PrefixFrameworkOptions;
 use serenity::gateway::ShardManager;
 use serenity::http::Http;
 use serenity::prelude::*;
 use tracing::error;
 
-use crate::commands::eval::*;
-use crate::commands::latex::*;
-use crate::structures::starboard::Starboard;
-use crate::events::star::MongoClient;
+use crate::commands::*;
+
+// This is all needed for slash commands
+#[derive(Debug)]
+struct Data {} // User data, which is stored and accessible in all command invocations
+
+type Error = Box<dyn std::error::Error + Send + Sync>;
+type Context<'a> = poise::Context<'a, Data, Error>;
 
 pub struct ShardManagerContainer;
 
 impl TypeMapKey for ShardManagerContainer {
     type Value = Arc<ShardManager>;
 }
-
-#[group]
-#[commands(latex, eval)]
-struct General;
 
 #[tokio::main]
 async fn main() {
@@ -57,9 +56,19 @@ async fn main() {
         Err(why) => panic!("Could not access application info: {:?}", why),
     };
 
-    // Create the framework
-    let framework = StandardFramework::new().group(&GENERAL_GROUP);
-    framework.configure(Configuration::new().owners(owners).prefix("~"));
+    let framework = poise::Framework::builder()
+        .options(poise::FrameworkOptions {
+            commands: vec![eval::eval(), latex::latex(), randomstar::randomstar()],
+            prefix_options: PrefixFrameworkOptions::default(),
+            ..Default::default()
+        })
+        .setup(|ctx, _ready, framework| {
+            Box::pin(async move {
+                poise::builtins::register_globally(ctx, &framework.options().commands).await?;
+                Ok(Data {})
+            })
+        })
+        .build();
 
     let intents = GatewayIntents::GUILD_MESSAGES
         | GatewayIntents::DIRECT_MESSAGES

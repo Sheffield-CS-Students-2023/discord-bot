@@ -220,7 +220,7 @@ pub fn find_if_dot_logic(text: &str) -> Option<String> {
                         .unwrap()
                         .captures(&new_text)
                         .is_some() && // If there is a dot followed by `
-                    new_text.matches('`').count() == 2 && 
+                    new_text.matches('`').count() == 2 &&
                     // if there are exactly two ``
                     Regex::new(&format!(
                             r"{dot}{dot}{dot} *`$", 
@@ -228,7 +228,7 @@ pub fn find_if_dot_logic(text: &str) -> Option<String> {
                         ))
                         .unwrap()
                         .captures(&new_text)
-                        .is_none() && 
+                        .is_none() &&
                         // if there are not three dots followed by `
                     Regex::new(
                         &format!(

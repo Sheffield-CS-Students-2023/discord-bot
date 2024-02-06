@@ -1,11 +1,13 @@
 use crate::structures::starboard::Starboard;
-use serenity::all::{ChannelId, CreateEmbed, CreateEmbedAuthor, Message, Reaction, ReactionType};
+use serenity::all::{
+    ChannelId, CreateEmbed, CreateEmbedAuthor, CreateMessage, EditMessage, Message, Reaction,
+    ReactionType,
+};
 use serenity::async_trait;
-use serenity::builder::EditMessage;
 use serenity::prelude::*;
 
-const MIN_STARS: usize = 3;
-const STARBOARD_CHANNEL_ID: u64 = 1201172163613433987;
+const MIN_STARS: usize = 2;
+pub const STARBOARD_CHANNEL_ID: u64 = 1201172163613433987;
 
 pub struct MongoClient;
 
@@ -41,7 +43,7 @@ fn make_starboard_embed(message: &Message) -> CreateEmbed {
                 .reactions
                 .iter()
                 .filter(|r| r.reaction_type == ReactionType::Unicode("⭐".to_string()))
-                .count()
+                .count() + 1
         ))
         .author(
             CreateEmbedAuthor::new(&message.author.name)
@@ -108,26 +110,22 @@ impl EventHandler for StarHandler {
             // Message has just reached starboard threshold
             let embed = make_starboard_embed(&reaction_message);
 
-            let mut message = reaction_channel
-                .id()
-                .say(
+            let message = channel
+                .send_message(
                     &ctx.http,
-                    &reaction_message.channel_id.mention().to_string(),
+                    CreateMessage::new()
+                        .content(&reaction_message.channel_id.mention().to_string())
+                        .embed(embed),
                 )
                 .await
                 .unwrap();
-            message
-                .edit(&ctx.http, EditMessage::new().embed(embed))
-                .await
-                .unwrap();
             starboard
-                .update_starboard_message(data.id, message.id.into())
+                .update_starboard_message(data._id, message.id.into())
                 .await;
             // channel.say(&ctx.http, embed).await.unwrap();
         } else if data.stars.len() >= MIN_STARS {
             // Edit the starboard message to reflect the new amount of stars
-            let mut message = reaction_channel
-                .id()
+            let mut message = channel
                 .message(&ctx.http, data.starboard_id.unwrap() as u64)
                 .await
                 .unwrap();

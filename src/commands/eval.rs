@@ -2,12 +2,12 @@ use phf::phf_map;
 use regex::Regex;
 use reqwest::header::{HeaderMap, HeaderValue};
 use reqwest::Client;
-use serenity::framework::standard::macros::command;
-use serenity::framework::standard::{Args, CommandResult};
+use serenity::json;
 use serenity::json::json;
-use serenity::model::prelude::*;
-use serenity::{json, prelude::*};
 use std::env;
+
+use crate::{Context, Error};
+use poise::command;
 
 const EVAL_LANGS: phf::Map<&'static str, &'static str> = phf_map! {
     "js" => "javascript",
@@ -37,17 +37,14 @@ const ALL_LANGS: [&str; 16] = [
     "bash",
 ];
 
-#[command]
-pub async fn eval(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult {
-    let lang = args.single::<String>()?;
-    let code = args.rest();
-
+#[command(prefix_command)]
+pub async fn eval(ctx: Context<'_>, lang: String, #[rest] code: String) -> Result<(), Error> {
     const URL: &str = "https://code-compiler10.p.rapidapi.com/";
 
     // Parse the code if it is a codeblock
     let code: &str = &Regex::new(r"(^```.*\n)|(^`)|`{1,3}$")
         .unwrap()
-        .replace_all(code, "");
+        .replace_all(&code, "");
 
     // check for aliases for the language
     let lang = if EVAL_LANGS.contains_key(lang.as_str()) {
@@ -58,7 +55,7 @@ pub async fn eval(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
 
     // If language is invalid, return
     if !ALL_LANGS.contains(&lang) {
-        msg.channel_id.say(&ctx.http, "Invalid language").await?;
+        ctx.say("Invalid language").await?;
         return Ok(());
     }
 
@@ -98,13 +95,11 @@ pub async fn eval(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
 
     // Check if the request was successful
     if !response.status().is_success() {
-        let _ = msg
-            .channel_id
-            .say(
-                &ctx.http,
-                format!("The following error occured: {}", response.text().await?),
-            )
-            .await;
+        let _ = ctx.say(format!(
+            "The following error occured: {}",
+            response.text().await?
+        ))
+        .await;
         return Ok(());
     }
 
@@ -118,9 +113,7 @@ pub async fn eval(ctx: &Context, msg: &Message, mut args: Args) -> CommandResult
     }
 
     // Send the response
-    msg.channel_id
-        .say(&ctx.http, format!("```{}\n{}```", lang, output))
-        .await?;
+    ctx.say(format!("```{}\n{}```", lang, output)).await?;
 
     Ok(())
 }

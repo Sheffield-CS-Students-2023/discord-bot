@@ -1,4 +1,3 @@
-use crate::MongoClient;
 use futures_lite::stream::StreamExt;
 use mongodb::bson::{doc, from_bson, Bson};
 use mongodb::Client;
@@ -7,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct StarStruct {
-    pub id: i64,
+    pub _id: i64,
     pub stars: Vec<i64>,
     pub starboard_id: Option<i64>,
     pub author_id: i64,
@@ -17,7 +16,7 @@ pub struct StarStruct {
 impl Clone for StarStruct {
     fn clone(&self) -> Self {
         Self {
-            id: self.id,
+            _id: self._id,
             stars: self.stars.clone(),
             starboard_id: self.starboard_id,
             author_id: self.author_id,
@@ -37,22 +36,6 @@ impl Starboard {
         }
     }
 
-    pub async fn get_starboard_message(&self, id: i64) -> Option<StarStruct> {
-        let mut cursor = self.collection.find(doc! {"_id": id}, None).await.unwrap();
-        let doc = cursor.next().await.unwrap();
-        if !doc.is_ok() {
-            return None;
-        }
-        let doc = doc.unwrap();
-        let doc = doc! {
-            "id": doc.get_i64("_id").unwrap(),
-            "stars": doc.get_array("stars").unwrap().iter().map(|x| x.as_i64().unwrap()).collect::<Vec<i64>>(),
-            "starboard_id": doc.get_i64("starboard_id").unwrap(),
-            "author_id": doc.get_i64("author_id").unwrap(),
-        };
-        Some(from_bson(Bson::Document(doc)).unwrap())
-    }
-
     pub async fn add_star(&self, id: i64, user_id: i64, author_id: i64) -> StarStruct {
         let mut cursor = self.collection.find(doc! {"_id": id}, None).await.unwrap();
         let doc = cursor.next().await;
@@ -60,7 +43,7 @@ impl Starboard {
         // doc is None if it's the first star added to the message
         let Some(doc) = doc else {
             let doc = doc! {
-                "id": id,
+                "_id": id,
                 "stars": [user_id],
                 "starboard_id": None::<i64>,
                 "author_id": author_id,
@@ -80,7 +63,7 @@ impl Starboard {
         let doc = doc! {
             "_id": id,
             "stars": stars,
-            "starboard_id": doc.get_i64("starboard_id").unwrap(),
+            "starboard_id": doc.get("starboard_id"),
             "author_id": author_id,
         };
         self.collection
@@ -129,7 +112,7 @@ impl Starboard {
                 continue;
             }
             let doc = doc.unwrap();
-            docs.push(doc.get_i64("_id").unwrap());
+            docs.push(doc.get_i64("starboard_id").unwrap());
         }
         docs.choose(&mut rand::thread_rng()).map(|x| *x)
     }
