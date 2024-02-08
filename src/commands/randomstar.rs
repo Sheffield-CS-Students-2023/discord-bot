@@ -31,7 +31,6 @@ pub async fn randomstar(ctx: Context<'_>) -> Result<(), Error> {
         .await;
 
     if starboard_message.is_err() {
-        println!("Uh oh! STINKY!!");
         ctx.say("No stars found").await?;
         return Ok(());
     }

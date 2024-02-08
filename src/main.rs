@@ -2,14 +2,13 @@ mod commands;
 mod events;
 mod structures;
 
-use std::collections::HashSet;
+// use std::collections::HashSet;
 use std::env;
 use std::sync::Arc;
 
 use crate::events::star::MongoClient;
-use poise::PrefixFrameworkOptions;
 use serenity::gateway::ShardManager;
-use serenity::http::Http;
+// use serenity::http::Http;
 use serenity::prelude::*;
 use tracing::error;
 
@@ -41,20 +40,20 @@ async fn main() {
 
     let token = env::var("TOKEN").expect("Expected a token in the environment");
 
-    let http = Http::new(&token);
+    // let http = Http::new(&token);
 
-    // We will fetch your bot's owners and id
-    let (owners, _bot_id) = match http.get_current_application_info().await {
-        Ok(info) => {
-            let mut owners = HashSet::new();
-            if let Some(owner) = &info.owner {
-                owners.insert(owner.id);
-            }
+    // We will fetch your bot's owners and id. Unecessary for now.
+    // let (owners, _bot_id) = match http.get_current_application_info().await {
+    //     Ok(info) => {
+    //         let mut owners = HashSet::new();
+    //         if let Some(owner) = &info.owner {
+    //             owners.insert(owner.id);
+    //         }
 
-            (owners, info.id)
-        }
-        Err(why) => panic!("Could not access application info: {:?}", why),
-    };
+    //         (owners, info.id)
+    //     }
+    //     Err(why) => panic!("Could not access application info: {:?}", why),
+    // };
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
