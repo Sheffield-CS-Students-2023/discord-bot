@@ -74,7 +74,7 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
             let font = Vec::from(include_bytes!("Arial.ttf") as &[u8]);
             let font = Font::try_from_vec(font).expect("Failed to load font file");
             // let scale = Scale::uniform(20.0); // Adjust text size as needed
-            let scale = get_scale_num(&cell);
+            let scale = get_scale_num(cell);
 
             // if there is more than one line
             if cell.lines().count() > 1 {
@@ -106,8 +106,8 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
                 draw_text_mut(
                     &mut img,
                     Rgba([0u8, 0u8, 0u8, 255u8]),
-                    x as i32 + offset.0 as i32,
-                    y as i32 + offset.1 as i32,
+                    x as i32 + offset.0,
+                    y as i32 + offset.1,
                     scale,
                     &font,
                     cell,

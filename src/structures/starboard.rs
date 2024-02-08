@@ -111,7 +111,7 @@ impl Starboard {
             };
             docs.push(doc.get_i64("starboard_id").unwrap());
         }
-        docs.choose(&mut rand::thread_rng()).map(|x| *x)
+        docs.choose(&mut rand::thread_rng()).copied()
     }
 
     pub async fn update_starboard_message(&self, id: i64, starboard_id: i64) {

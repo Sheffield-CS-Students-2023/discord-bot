@@ -48,7 +48,7 @@ fn make_starboard_embed(message: &Message) -> CreateEmbed {
         ))
         .author(
             CreateEmbedAuthor::new(&message.author.name)
-                .icon_url(&message.author.avatar_url().unwrap_or_default()),
+                .icon_url(message.author.avatar_url().unwrap_or_default()),
         )
         .color(0xFFD700)
         .description(format!(
@@ -58,7 +58,7 @@ fn make_starboard_embed(message: &Message) -> CreateEmbed {
             attachment_name,
             message.link()
         ))
-        .timestamp(&message.timestamp);
+        .timestamp(message.timestamp);
 
     if let Some(attachment) = message.attachments.first() {
         embed = embed.image(attachment.url.as_str());

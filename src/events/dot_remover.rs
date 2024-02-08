@@ -18,7 +18,7 @@ impl PartialEq<&str> for StrOrChar<&str> {
     fn eq(&self, other: &&str) -> bool {
         match self {
             StrOrChar::Str(s) => s == other,
-            StrOrChar::Char(c) => c.to_string() == other.to_string(),
+            StrOrChar::Char(c) => c.to_string() == *other.to_string(),
         }
     }
 }
@@ -39,16 +39,6 @@ impl PartialEq<StrOrChar<&str>> for StrOrChar<&str> {
         match self {
             StrOrChar::Str(s) => s == &other.to_string(),
             StrOrChar::Char(c) => c.to_string() == other.to_string(),
-        }
-    }
-}
-
-// Implement to_string for StrOrChar
-impl StrOrChar<&str> {
-    fn to_string(&self) -> String {
-        match self {
-            StrOrChar::Str(s) => s.to_string(),
-            StrOrChar::Char(c) => c.to_string(),
         }
     }
 }
@@ -142,7 +132,7 @@ fn remove_whitespace_from_end(text: &str, dot: &StrOrChar<&str>) -> String {
     .unwrap();
 
     // count number of the ` in the first match
-    let occurances = re.find_iter(&text).next();
+    let occurances = re.find_iter(text).next();
     if occurances.is_some() {
         owned_text = re
             .replace_all(
@@ -153,7 +143,7 @@ fn remove_whitespace_from_end(text: &str, dot: &StrOrChar<&str>) -> String {
             .to_string();
     }
 
-    return owned_text.to_string();
+    owned_text.to_string()
 }
 
 // If the dot is found, return the text without dot
@@ -165,7 +155,7 @@ pub fn find_if_dot_logic(text: &str) -> Option<String> {
         joined_dots = joined_dots
     ))
     .unwrap();
-    if re.find_iter(&text).count() > 1 {
+    if re.find_iter(text).count() > 1 {
         return None; // If the text has more than a single sentence the last dot does not need to be removed.
     }
 
@@ -178,7 +168,7 @@ pub fn find_if_dot_logic(text: &str) -> Option<String> {
         ))
         .unwrap()
         .replace_all(
-            &remove_whitespace_from_end(&text, if dot == '.' { &replacement } else { &dot }),
+            &remove_whitespace_from_end(text, if dot == '.' { &replacement } else { &dot }),
             ".",
         )
         .to_string();
@@ -342,7 +332,7 @@ impl EventHandler for DotHandler {
 
             let http = Http::new("");
             let builder = ExecuteWebhook::new()
-                .content(&text.unwrap())
+                .content(text.unwrap())
                 .username(&name)
                 .avatar_url(&avatar);
             webhook
@@ -409,7 +399,7 @@ impl EventHandler for DotHandler {
             };
 
             let builder = ExecuteWebhook::new()
-                .content(&text.unwrap())
+                .content(text.unwrap())
                 .username(&name)
                 .avatar_url(&avatar);
             webhook
