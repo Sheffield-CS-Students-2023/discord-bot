@@ -8,6 +8,25 @@ use rusttype::{Font, Scale};
 use serenity::all::CreateAttachment;
 use std::io::Cursor;
 
+fn get_scale_num(text: &str) -> Scale {
+    // Get the scale of the text based on number of lines
+    let lines = text.lines().count();
+    match lines {
+        1 => Scale::uniform(25.0),
+        2 => Scale::uniform(18.0),
+        3 => Scale::uniform(15.0),
+        _ => Scale::uniform(14.0),
+    }
+}
+
+fn get_multiplier_from_line(lines: usize) -> usize {
+    match lines {
+        2 => 85/10,
+        3 => 75/10,
+        _ => 60/10,
+    }
+}
+
 fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
     // Constants for bingo card dimensions
     const CELL_SIZE: u32 = 150;
@@ -52,20 +71,46 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
             // Draw text scaled to fit into the cell
             let font = Vec::from(include_bytes!("Arial.ttf") as &[u8]);
             let font = Font::try_from_vec(font).expect("Failed to load font file");
-            let scale = Scale::uniform(20.0); // Adjust text size as needed
-            let offset = (
-                (CELL_SIZE - (cell.len() as u32 * 10)) / 2,
-                (CELL_SIZE - 20) / 2,
-            ); // Adjust offset based on text size
-            draw_text_mut(
-                &mut img,
-                Rgba([0u8, 0u8, 0u8, 255u8]),
-                x as i32 + offset.0 as i32,
-                y as i32 + offset.1 as i32,
-                scale,
-                &font,
-                cell,
-            );
+            // let scale = Scale::uniform(20.0); // Adjust text size as needed
+            let scale = get_scale_num(&cell);
+
+            println!("{:?} {:?}", cell, scale);
+
+            // if there is more than one line
+            if (cell.lines().count() > 1) {
+                let longest_line = cell.lines().max_by_key(|line| line.len()).unwrap();
+                for (i, line) in cell.lines().enumerate() {
+                    let offset = (
+                        // center text given on height (number of lines) and width (length of longest line)
+                        CELL_SIZE as i32 - (longest_line.len() as i32 * get_multiplier_from_line(cell.lines().count()) as i32),
+                        (CELL_SIZE as i32 - (cell.lines().count() as i32 * 20)) / 2,
+                    );
+                    draw_text_mut(
+                        &mut img,
+                        Rgba([0u8, 0u8, 0u8, 255u8]),
+                        x as i32 + offset.0 as i32,
+                        y as i32 + offset.1 as i32 + (i as i32 * 20),
+                        scale,
+                        &font,
+                        line,
+                    );
+                }
+            } else {
+                let offset = (
+                    // center text given on height (number of lines) and width (length of longest line)
+                    (CELL_SIZE as i32 - (cell.len() as i32 * 10)) / 2,
+                    (CELL_SIZE as i32 - (cell.lines().count() as i32 * 20)) / 2,
+                );
+                draw_text_mut(
+                    &mut img,
+                    Rgba([0u8, 0u8, 0u8, 255u8]),
+                    x as i32 + offset.0 as i32,
+                    y as i32 + offset.1 as i32,
+                    scale,
+                    &font,
+                    cell,
+                );
+            }
         }
     }
 
@@ -122,8 +167,32 @@ fn create_bingo_card(items: Vec<&str>) -> Vec<Vec<&str>> {
 pub async fn bingo(ctx: Context<'_>) -> Result<(), Error> {
     println!("Bingo command");
     let items = vec![
-        "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R",
-        "S", "T", "U", "V", "W", "X", "Y", "Z",
+        "Sound related gif\n(megaphone, \nmusic etc)",
+        "walks all the way \nto the top of LT1",
+        "Totally ignores \nthat the mic keeps\n cutting out",
+        "states a grossly\noutdated number",
+        "Finishes 10+ mins\n early",
+        "Goes through what\nfeels like 1 month of\ncontent in one\nlecture",
+        "A slide has more\nthan 5 different\ncolours",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
+        "TBD",
     ];
 
     let bingo_card = create_bingo_card(items);
