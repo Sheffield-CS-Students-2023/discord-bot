@@ -20,7 +20,7 @@ pub struct Starboard {
 impl Starboard {
     pub async fn new(client: &Client) -> Self {
         Self {
-            collection: client.database("starboard").collection("starboard"),
+            collection: client.database("discord").collection("starboard"),
         }
     }
 
