@@ -1,0 +1,28 @@
+name: Rust App Deployment
+
+on:
+  push:
+    branches:
+      - rust-rewrite
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: SSH into Oracle Server and deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.ORACLE_SERVER_HOST }}
+        username: ${{ secrets.ORACLE_SERVER_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          tmux send-keys -t Sheffbot C-c
+          sleep 2
+          tmux send-keys -t Sheffbot "git pull" Enter
+          tmux send-keys -t Sheffbot "cargo build --release" Enter
+          tmux send-keys -t Sheffbot "cargo run" Enter
