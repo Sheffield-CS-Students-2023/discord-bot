@@ -77,6 +77,11 @@ impl EventHandler for StarHandler {
         if reaction.emoji != ReactionType::Unicode("⭐".to_string()) {
             return;
         }
+
+        if reaction.channel_id == STARBOARD_CHANNEL_ID {
+            return;
+        }
+
         let channel = ChannelId::new(STARBOARD_CHANNEL_ID);
 
         let mut data = ctx.data.write().await;
