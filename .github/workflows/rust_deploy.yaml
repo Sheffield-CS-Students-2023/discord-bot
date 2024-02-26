@@ -3,7 +3,7 @@ name: Rust App Deployment
 on:
   push:
     branches:
-      - main
+      - rust-rewrite
 
 jobs:
   deploy:

@@ -8,7 +8,7 @@ use rusttype::{Font, Scale};
 use serenity::all::CreateAttachment;
 use std::io::Cursor;
 
-const DIMENSIONS: usize = 3;
+const DIMENSIONS: usize = 5;
 
 fn get_scale_num(text: &str) -> Scale {
     // Get the scale of the text based on number of lines
@@ -23,7 +23,7 @@ fn get_scale_num(text: &str) -> Scale {
 
 fn get_multiplier_from_line(lines: usize) -> usize {
     match lines {
-        2 => 85 / 10,
+        2 => 80 / 10,
         3 => 75 / 10,
         _ => 60 / 10,
     }
@@ -170,30 +170,30 @@ fn create_bingo_card(items: Vec<&str>) -> Vec<Vec<&str>> {
 pub async fn bingo(ctx: Context<'_>) -> Result<(), Error> {
     let items = vec![
         "Sound related gif\n(megaphone, \nmusic etc)",
-        "walks all the way \nto the top of LT1",
+        "Walks all the way \nto the top of LT1",
         "Totally ignores \nthat the mic keeps\n cutting out",
         "states a grossly\noutdated number",
         "Finishes 10+ mins\n early",
         "Goes through what\nfeels like 1 month of\ncontent in one\nlecture",
         "A slide has more\nthan 5 different\ncolours",
-        "ends up giving 0\ntime to think during\nquiz slides",
-        "gives up trying\nto explain an answer\nin quiz slides",
-        "stares directly\ninto your soul when\nyou ask a question",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
-        // "TBD",
+        "Ends up giving 0\ntime to think during\nquiz slides",
+        "Gives up trying\nto explain an answer\nin quiz slides",
+        "Walks and stays\ndirectly next to\nyou",
+        "Stressing random\nbits of words",
+        "Using a sound\neffect that is completely\nunrelated to\nthe slide",
+        "Forgets what he\nwas going to say",
+        "Says \"IS THIS\nCLEAR TO YOU?!\"",
+        "Says \n\"LET ME REPEAT!\"",
+        "Says \"DO YOU\nUNDERSTAND?!\"",
+        "Uses laser\npointer",
+        "Flashing stuff\non slides",
+        "Talks unnecessarily\naggressive",
+        "A quirky GIF is\nin the slides",
+        "Takes less than 1\n minute for a slide\nthat needed much\nmore time",
+        "Skype mention",
+        "Uses 3+ different\ntypes of bullet\npoints",
+        "Flashing stuff on\nslides",
+        "Highlights a\nsingle dot",
         // "TBD",
     ];
 
