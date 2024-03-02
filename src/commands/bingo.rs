@@ -59,7 +59,7 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
 
             let mut cell_lines = cell.split_into_lines(CELL_SIZE, scale, &font);
 
-			// Readjust scale if height of all the text is too large
+            // Readjust scale if height of all the text is too large
             let height = cell_lines.len() as f32 * cell_lines[0].measure_height(scale, &font);
             if height > CELL_SIZE as f32 {
                 scale = Scale::uniform(scale.x * (1.0 - CELL_SIZE as f32 / height));
