@@ -9,6 +9,7 @@ use serenity::all::CreateAttachment;
 use std::io::Cursor;
 
 const DIMENSIONS: usize = 5;
+const MAX_TEXT_SCALE: Scale = Scale { x: 25.0, y: 25.0 };
 
 fn get_scale_num(text: &str) -> Scale {
     // Get the scale of the text based on number of lines
@@ -74,7 +75,8 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
             let font = Vec::from(include_bytes!("Arial.ttf") as &[u8]);
             let font = Font::try_from_vec(font).expect("Failed to load font file");
             // let scale = Scale::uniform(20.0); // Adjust text size as needed
-            let scale = get_scale_num(cell);
+            // let scale = get_scale_num(cell);
+			let scale = cell.get_scale(CELL_SIZE, &font);
 
             let cell_string = cell.split_into_lines(CELL_SIZE, scale, &font);
 
@@ -188,6 +190,7 @@ pub async fn bingo(ctx: Context<'_>) -> Result<(), Error> {
 trait StringSizer {
     fn measure_width(&self, scale: Scale, font: &Font) -> f32;
     fn split_into_lines(&self, max_width: u32, scale: Scale, font: &Font) -> Vec<&str>;
+    fn get_scale(&self, max_width: u32, font: &Font) -> Scale;
 }
 
 impl StringSizer for str {
@@ -204,7 +207,7 @@ impl StringSizer for str {
     fn split_into_lines(&self, max_width: u32, scale: Scale, font: &Font) -> Vec<&str> {
         let width = self.measure_width(scale, &font);
 
-        if width < max_width as f32 {
+        if width <= max_width as f32 {
             vec![self]
         } else {
             let end_of_line = font
@@ -218,7 +221,7 @@ impl StringSizer for str {
                     .bytes()
                     .rev()
                     .position(|b| b == b' ')
-                    .unwrap_or(4) as usize;
+					.expect("Given a word thats too large to fit in the max_width");
 
             let next_lines = &self[space_position..].split_into_lines(max_width, scale, font);
 
@@ -226,5 +229,20 @@ impl StringSizer for str {
             ret.extend(next_lines);
             ret
         }
+    }
+
+    fn get_scale(&self, max_width: u32, font: &Font) -> Scale {
+        let largest_width = self
+            .split(' ')
+            .map(|s| s.measure_width(MAX_TEXT_SCALE, font))
+			// We can't use `max` here because f32 does not impliment Ord
+            .reduce(|f, max| f.max(max))
+			.expect("Given empty string");
+
+		if largest_width > max_width as f32 {
+			Scale::uniform(MAX_TEXT_SCALE.x * (max_width as f32 / largest_width))
+		} else {
+			MAX_TEXT_SCALE
+		}
     }
 }
