@@ -4,7 +4,7 @@ use imageproc::drawing::draw_text_mut;
 use poise::{command, CreateReply};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use rusttype::{Font, Scale, point};
+use rusttype::{point, Font, Scale};
 use serenity::all::CreateAttachment;
 use std::io::Cursor;
 
@@ -76,20 +76,21 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
             // let scale = Scale::uniform(20.0); // Adjust text size as needed
             let scale = get_scale_num(cell);
 
-            let v_metrics = font.v_metrics(scale);
-
+            let cell_string = cell.split_into_lines(CELL_SIZE, scale, &font);
+			dbg!(&cell_string);
 
             // if there is more than one line
-            if cell.lines().count() > 1 {
-                let longest_line = cell.lines().max_by_key(|line| line.len()).unwrap();
-                for (i, line) in cell.lines().enumerate() {
+            if cell_string.len() > 1 {
+                let longest_line = cell_string.iter().max_by_key(|line| line.len()).unwrap();
+                for (i, line) in cell_string.iter().enumerate() {
                     let offset = (
                         // center text given on height (number of lines) and width (length of longest line)
                         CELL_SIZE as i32
                             - (longest_line.len() as i32
-                                * get_multiplier_from_line(cell.lines().count()) as i32),
-                        (CELL_SIZE as i32 - (cell.lines().count() as i32 * 20)) / 2,
+                                * get_multiplier_from_line(cell_string.len()) as i32),
+                        (CELL_SIZE as i32 - (cell_string.len() as i32 * 20)) / 2,
                     );
+                    let offset = (0, 0);
                     draw_text_mut(
                         &mut img,
                         Rgba([0u8, 0u8, 0u8, 255u8]),
@@ -185,20 +186,46 @@ pub async fn bingo(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-fn measure_string(string: &str) {
-	let v_metrics = font.v_metrics(scale);
+trait StringSizer {
+    fn measure_width(&self, scale: Scale, font: &Font) -> f32;
+    fn split_into_lines(&self, max_width: u32, scale: Scale, font: &Font) -> Vec<&str>;
+}
 
-	let glyphs: Vec<_> = font.layout(text, scale, point(0.0, 0.0)).collect();
-	let glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
-	let glyphs_width = {
-		let min_x = glyphs
-			.first()
-			.map(|g| g.pixel_bounding_box().unwrap().min.x)
-			.unwrap();
-		let max_x = glyphs
-			.last()
-			.map(|g| g.pixel_bounding_box().unwrap().max.x)
-			.unwrap();
-		(max_x - min_x) as u32
-	};
+impl StringSizer for str {
+    fn measure_width(&self, scale: Scale, font: &Font) -> f32 {
+        let width = font
+            .layout(self, scale, point(0.0, 0.0))
+            .last()
+            .map(|g| g.position().x + g.unpositioned().h_metrics().advance_width)
+            .unwrap_or(0.0);
+
+        width
+    }
+
+    fn split_into_lines(&self, max_width: u32, scale: Scale, font: &Font) -> Vec<&str> {
+        let width = self.measure_width(scale, &font);
+
+        if width < max_width as f32 {
+            vec![self]
+        } else {
+            let end_of_line = font
+                .layout(self, scale, point(0.0, 0.0))
+                .map(|g| g.position().x + g.unpositioned().h_metrics().advance_width)
+                .position(|g| g > max_width as f32)
+                .unwrap();
+
+            let space_position = end_of_line
+                - *&self[0..end_of_line as usize]
+                    .bytes()
+                    .rev()
+                    .position(|b| b == b' ')
+                    .unwrap_or(4) as usize;
+
+            let next_lines = &self[space_position..].split_into_lines(max_width, scale, font);
+
+            let mut ret = vec![&self[0..space_position - 1]];
+            ret.extend(next_lines);
+            ret
+        }
+    }
 }
