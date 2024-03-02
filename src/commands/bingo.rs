@@ -77,7 +77,6 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
             let scale = get_scale_num(cell);
 
             let cell_string = cell.split_into_lines(CELL_SIZE, scale, &font);
-			dbg!(&cell_string);
 
             // if there is more than one line
             if cell_string.len() > 1 {
@@ -212,10 +211,10 @@ impl StringSizer for str {
                 .layout(self, scale, point(0.0, 0.0))
                 .map(|g| g.position().x + g.unpositioned().h_metrics().advance_width)
                 .position(|g| g > max_width as f32)
-                .unwrap();
+                .expect("Given an empty line");
 
             let space_position = end_of_line
-                - *&self[0..end_of_line as usize]
+                - self[0..end_of_line as usize]
                     .bytes()
                     .rev()
                     .position(|b| b == b' ')
