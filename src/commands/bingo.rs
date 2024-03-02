@@ -55,11 +55,18 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
             // Draw text scaled to fit into the cell
             let font = Vec::from(include_bytes!("Arial.ttf") as &[u8]);
             let font = Font::try_from_vec(font).expect("Failed to load font file");
-            let scale = cell.get_scale(CELL_SIZE, &font);
+            let mut scale = cell.get_scale(CELL_SIZE, &font);
 
-            let cell_lines = cell.split_into_lines(CELL_SIZE, scale, &font);
+            let mut cell_lines = cell.split_into_lines(CELL_SIZE, scale, &font);
 
-			// Offset for all lines
+			// Readjust scale if height of all the text is too large
+            let height = cell_lines.len() as f32 * cell_lines[0].measure_height(scale, &font);
+            if height > CELL_SIZE as f32 {
+                scale = Scale::uniform(scale.x * (1.0 - CELL_SIZE as f32 / height));
+                cell_lines = cell.split_into_lines(CELL_SIZE, scale, &font);
+            }
+
+            // Offset for all lines
             let vertical_offset = (CELL_SIZE
                 - (cell_lines
                     .iter()
@@ -68,14 +75,16 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
                 / 2;
 
             for (i, line) in cell_lines.into_iter().enumerate() {
-				// Center text
+                // Center text
                 let horizontal_offset = (CELL_SIZE - (line.measure_width(scale, &font)) as u32) / 2;
 
                 draw_text_mut(
                     &mut img,
                     Rgba([0u8, 0u8, 0u8, 255u8]),
                     x as i32 + horizontal_offset as i32,
-                    y as i32 + vertical_offset as i32 + (i as i32 * 20),
+                    y as i32
+                        + vertical_offset as i32
+                        + (i as i32 * line.measure_height(scale, &font) as i32),
                     scale,
                     &font,
                     line,
@@ -161,7 +170,7 @@ trait StringSizer {
 
 impl StringSizer for str {
     fn measure_width(&self, scale: Scale, font: &Font) -> f32 {
-		// point doens't matter here
+        // point doens't matter here
         let width = font
             .layout(self, scale, point(0.0, 0.0))
             .last()
@@ -197,10 +206,10 @@ impl StringSizer for str {
                     .position(|b| b == b' ')
                     .expect("Given a word thats too large to fit in the max_width");
 
-			// Rerun the function on the next line
+            // Rerun the function on the next line
             let next_lines = &self[space_position..].split_into_lines(max_width, scale, font);
 
-			// Combine them
+            // Combine them
             let mut ret = vec![&self[0..space_position - 1]];
             ret.extend(next_lines);
             ret
@@ -208,7 +217,7 @@ impl StringSizer for str {
     }
 
     fn get_scale(&self, max_width: u32, font: &Font) -> Scale {
-		// Find the largest word using the max scale
+        // Find the largest word using the max scale
         let largest_width = self
             .split(' ')
             .map(|s| s.measure_width(MAX_TEXT_SCALE, font))
@@ -216,7 +225,7 @@ impl StringSizer for str {
             .reduce(|f, max| f.max(max))
             .expect("Given empty string");
 
-		// If the largest word is too large, adjust the scale using a fraction of the max scale
+        // If the largest word is too large, adjust the scale using a fraction of the max scale
         if largest_width > max_width as f32 {
             Scale::uniform(MAX_TEXT_SCALE.x * (max_width as f32 / largest_width))
         } else {
