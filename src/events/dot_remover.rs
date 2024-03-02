@@ -74,6 +74,13 @@ const DOTS: [StrOrChar<&str>; 20] = [
     StrOrChar::Char('．'),
     StrOrChar::Char('｡'),
     StrOrChar::Char('܂'),
+    StrOrChar::Char('˳'),
+    StrOrChar::Char('݀'),
+    StrOrChar::Char('݂'),
+    StrOrChar::Char('ܼ'),
+    StrOrChar::Char('ٜ'),
+    StrOrChar::Char('ִ'),
+    StrOrChar::Char('ׅ'),
 ];
 
 fn remove_whitespace_from_end(text: &str, dot: &StrOrChar<&str>) -> String {
@@ -93,6 +100,8 @@ fn remove_whitespace_from_end(text: &str, dot: &StrOrChar<&str>) -> String {
         StrOrChar::Char('\u{200D}'),
         StrOrChar::Char('\u{200E}'),
         StrOrChar::Char('\u{200F}'),
+        StrOrChar::Char('\u{2060}'),
+        StrOrChar::Char('\u{180E}'),
         StrOrChar::Char('\u{3164}'),
         StrOrChar::Str(r"_[ \n]*_"),
         StrOrChar::Str(r"\|\|[ \n]*\|\|"),
