@@ -11,25 +11,6 @@ use std::io::Cursor;
 const DIMENSIONS: usize = 5;
 const MAX_TEXT_SCALE: Scale = Scale { x: 25.0, y: 25.0 };
 
-fn get_scale_num(text: &str) -> Scale {
-    // Get the scale of the text based on number of lines
-    let lines = text.lines().count();
-    match lines {
-        1 => Scale::uniform(25.0),
-        2 => Scale::uniform(18.0),
-        3 => Scale::uniform(15.0),
-        _ => Scale::uniform(14.0),
-    }
-}
-
-fn get_multiplier_from_line(lines: usize) -> usize {
-    match lines {
-        2 => 80 / 10,
-        3 => 75 / 10,
-        _ => 60 / 10,
-    }
-}
-
 fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
     // Constants for bingo card dimensions
     const CELL_SIZE: u32 = 150;
@@ -74,48 +55,30 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
             // Draw text scaled to fit into the cell
             let font = Vec::from(include_bytes!("Arial.ttf") as &[u8]);
             let font = Font::try_from_vec(font).expect("Failed to load font file");
-            // let scale = Scale::uniform(20.0); // Adjust text size as needed
-            // let scale = get_scale_num(cell);
-			let scale = cell.get_scale(CELL_SIZE, &font);
+            let scale = cell.get_scale(CELL_SIZE, &font);
 
-            let cell_string = cell.split_into_lines(CELL_SIZE, scale, &font);
+            let cell_lines = cell.split_into_lines(CELL_SIZE, scale, &font);
 
-            // if there is more than one line
-            if cell_string.len() > 1 {
-                let longest_line = cell_string.iter().max_by_key(|line| line.len()).unwrap();
-                for (i, line) in cell_string.iter().enumerate() {
-                    let offset = (
-                        // center text given on height (number of lines) and width (length of longest line)
-                        CELL_SIZE as i32
-                            - (longest_line.len() as i32
-                                * get_multiplier_from_line(cell_string.len()) as i32),
-                        (CELL_SIZE as i32 - (cell_string.len() as i32 * 20)) / 2,
-                    );
-                    let offset = (0, 0);
-                    draw_text_mut(
-                        &mut img,
-                        Rgba([0u8, 0u8, 0u8, 255u8]),
-                        x as i32 + offset.0 as i32,
-                        y as i32 + offset.1 as i32 + (i as i32 * 20),
-                        scale,
-                        &font,
-                        line,
-                    );
-                }
-            } else {
-                let offset = (
-                    // center text given on height (number of lines) and width (length of longest line)
-                    (CELL_SIZE as i32 - (cell.len() as i32 * 10)) / 2,
-                    (CELL_SIZE as i32 - (cell.lines().count() as i32 * 20)) / 2,
-                );
+			// Offset for all lines
+            let vertical_offset = (CELL_SIZE
+                - (cell_lines
+                    .iter()
+                    .map(|l| l.measure_height(scale, &font))
+                    .sum::<f32>()) as u32)
+                / 2;
+
+            for (i, line) in cell_lines.into_iter().enumerate() {
+				// Center text
+                let horizontal_offset = (CELL_SIZE - (line.measure_width(scale, &font)) as u32) / 2;
+
                 draw_text_mut(
                     &mut img,
                     Rgba([0u8, 0u8, 0u8, 255u8]),
-                    x as i32 + offset.0,
-                    y as i32 + offset.1,
+                    x as i32 + horizontal_offset as i32,
+                    y as i32 + vertical_offset as i32 + (i as i32 * 20),
                     scale,
                     &font,
-                    cell,
+                    line,
                 );
             }
         }
@@ -187,14 +150,18 @@ pub async fn bingo(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
+// This name is kind of random to be honest it doesn't mean anything
+// also can maybe be moved into a different file
 trait StringSizer {
     fn measure_width(&self, scale: Scale, font: &Font) -> f32;
+    fn measure_height(&self, scale: Scale, font: &Font) -> f32;
     fn split_into_lines(&self, max_width: u32, scale: Scale, font: &Font) -> Vec<&str>;
     fn get_scale(&self, max_width: u32, font: &Font) -> Scale;
 }
 
 impl StringSizer for str {
     fn measure_width(&self, scale: Scale, font: &Font) -> f32 {
+		// point doens't matter here
         let width = font
             .layout(self, scale, point(0.0, 0.0))
             .last()
@@ -204,27 +171,36 @@ impl StringSizer for str {
         width
     }
 
+    fn measure_height(&self, scale: Scale, font: &Font) -> f32 {
+        let v_metrics = font.v_metrics(scale);
+        v_metrics.ascent - v_metrics.descent + v_metrics.line_gap
+    }
+
     fn split_into_lines(&self, max_width: u32, scale: Scale, font: &Font) -> Vec<&str> {
         let width = self.measure_width(scale, &font);
 
         if width <= max_width as f32 {
             vec![self]
         } else {
+            // Find the character that causes it to go over the max_width
             let end_of_line = font
                 .layout(self, scale, point(0.0, 0.0))
                 .map(|g| g.position().x + g.unpositioned().h_metrics().advance_width)
                 .position(|g| g > max_width as f32)
-                .expect("Given an empty line");
+                .expect("Given a string without a space");
 
+            // Find the first space from the end of the above character ^
             let space_position = end_of_line
                 - self[0..end_of_line as usize]
                     .bytes()
                     .rev()
                     .position(|b| b == b' ')
-					.expect("Given a word thats too large to fit in the max_width");
+                    .expect("Given a word thats too large to fit in the max_width");
 
+			// Rerun the function on the next line
             let next_lines = &self[space_position..].split_into_lines(max_width, scale, font);
 
+			// Combine them
             let mut ret = vec![&self[0..space_position - 1]];
             ret.extend(next_lines);
             ret
@@ -232,17 +208,19 @@ impl StringSizer for str {
     }
 
     fn get_scale(&self, max_width: u32, font: &Font) -> Scale {
+		// Find the largest word using the max scale
         let largest_width = self
             .split(' ')
             .map(|s| s.measure_width(MAX_TEXT_SCALE, font))
-			// We can't use `max` here because f32 does not impliment Ord
+            // We can't use `max` here because f32 does not impliment Ord
             .reduce(|f, max| f.max(max))
-			.expect("Given empty string");
+            .expect("Given empty string");
 
-		if largest_width > max_width as f32 {
-			Scale::uniform(MAX_TEXT_SCALE.x * (max_width as f32 / largest_width))
-		} else {
-			MAX_TEXT_SCALE
-		}
+		// If the largest word is too large, adjust the scale using a fraction of the max scale
+        if largest_width > max_width as f32 {
+            Scale::uniform(MAX_TEXT_SCALE.x * (max_width as f32 / largest_width))
+        } else {
+            MAX_TEXT_SCALE
+        }
     }
 }
