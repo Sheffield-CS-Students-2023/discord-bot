@@ -4,7 +4,7 @@ use imageproc::drawing::draw_text_mut;
 use poise::{command, CreateReply};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use rusttype::{Font, Scale};
+use rusttype::{Font, Scale, point};
 use serenity::all::CreateAttachment;
 use std::io::Cursor;
 
@@ -75,6 +75,9 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
             let font = Font::try_from_vec(font).expect("Failed to load font file");
             // let scale = Scale::uniform(20.0); // Adjust text size as needed
             let scale = get_scale_num(cell);
+
+            let v_metrics = font.v_metrics(scale);
+
 
             // if there is more than one line
             if cell.lines().count() > 1 {
@@ -168,34 +171,7 @@ fn create_bingo_card(items: Vec<&str>) -> Vec<Vec<&str>> {
 
 #[command(prefix_command)]
 pub async fn bingo(ctx: Context<'_>) -> Result<(), Error> {
-    let items = vec![
-        "Sound related gif\n(megaphone, \nmusic etc)",
-        "Walks all the way \nto the top of LT1",
-        "Totally ignores \nthat the mic keeps\n cutting out",
-        "states a grossly\noutdated number",
-        "Finishes 10+ mins\n early",
-        "Goes through what\nfeels like 1 month of\ncontent in one\nlecture",
-        "A slide has more\nthan 5 different\ncolours",
-        "Ends up giving 0\ntime to think during\nquiz slides",
-        "Gives up trying\nto explain an answer\nin quiz slides",
-        "Walks and stays\ndirectly next to\nyou",
-        "Stressing random\nbits of words",
-        "Using a sound\neffect that is completely\nunrelated to\nthe slide",
-        "Forgets what he\nwas going to say",
-        "Says \"IS THIS\nCLEAR TO YOU?!\"",
-        "Says \n\"LET ME REPEAT!\"",
-        "Says \"DO YOU\nUNDERSTAND?!\"",
-        "Uses laser\npointer",
-        "Flashing stuff\non slides",
-        "Talks unnecessarily\naggressive",
-        "A quirky GIF is\nin the slides",
-        "Takes less than 1\n minute for a slide\nthat needed much\nmore time",
-        "Skype mention",
-        "Uses 3+ different\ntypes of bullet\npoints",
-        "Flashing stuff on\nslides",
-        "Highlights a\nsingle dot",
-        // "TBD",
-    ];
+    let items: Vec<_> = include_str!("bingo_words.txt").lines().collect();
 
     let bingo_card = create_bingo_card(items);
     let img = generate_bingo_card(bingo_card);
@@ -207,4 +183,22 @@ pub async fn bingo(ctx: Context<'_>) -> Result<(), Error> {
     ctx.send(reply).await?;
 
     Ok(())
+}
+
+fn measure_string(string: &str) {
+	let v_metrics = font.v_metrics(scale);
+
+	let glyphs: Vec<_> = font.layout(text, scale, point(0.0, 0.0)).collect();
+	let glyphs_height = (v_metrics.ascent - v_metrics.descent).ceil() as u32;
+	let glyphs_width = {
+		let min_x = glyphs
+			.first()
+			.map(|g| g.pixel_bounding_box().unwrap().min.x)
+			.unwrap();
+		let max_x = glyphs
+			.last()
+			.map(|g| g.pixel_bounding_box().unwrap().max.x)
+			.unwrap();
+		(max_x - min_x) as u32
+	};
 }
