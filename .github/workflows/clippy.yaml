@@ -1,10 +1,15 @@
-on: push
-name: Clippy check
+name: Rust App Deployment
+
+on:
+  push:
+    branches:
+      - rust-rewrite
+
 jobs:
   clippy_check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - run: rustup component add clippy
       - uses: actions-rs/clippy-check@v1
         with:
