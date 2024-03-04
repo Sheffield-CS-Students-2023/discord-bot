@@ -53,7 +53,7 @@ impl std::fmt::Display for StrOrChar<&str> {
     }
 }
 
-const DOTS: [StrOrChar<&str>; 20] = [
+const DOTS: [StrOrChar<&str>; 27] = [
     StrOrChar::Char('.'),
     StrOrChar::Char('·'),
     StrOrChar::Char('․'),
@@ -84,7 +84,7 @@ const DOTS: [StrOrChar<&str>; 20] = [
 ];
 
 fn remove_whitespace_from_end(text: &str, dot: &StrOrChar<&str>) -> String {
-    const WHITESPACE: [StrOrChar<&str>; 18] = [
+    const WHITESPACE: [StrOrChar<&str>; 20] = [
         StrOrChar::Char('\u{2000}'),
         StrOrChar::Char('\u{2001}'),
         StrOrChar::Char('\u{2003}'),
