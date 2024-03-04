@@ -4,30 +4,12 @@ use imageproc::drawing::draw_text_mut;
 use poise::{command, CreateReply};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use rusttype::{Font, Scale};
+use rusttype::{point, Font, Scale};
 use serenity::all::CreateAttachment;
 use std::io::Cursor;
 
 const DIMENSIONS: usize = 5;
-
-fn get_scale_num(text: &str) -> Scale {
-    // Get the scale of the text based on number of lines
-    let lines = text.lines().count();
-    match lines {
-        1 => Scale::uniform(25.0),
-        2 => Scale::uniform(18.0),
-        3 => Scale::uniform(15.0),
-        _ => Scale::uniform(14.0),
-    }
-}
-
-fn get_multiplier_from_line(lines: usize) -> usize {
-    match lines {
-        2 => 80 / 10,
-        3 => 75 / 10,
-        _ => 60 / 10,
-    }
-}
+const MAX_TEXT_SCALE: Scale = Scale { x: 25.0, y: 25.0 };
 
 fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
     // Constants for bingo card dimensions
@@ -73,44 +55,39 @@ fn generate_bingo_card(cells: Vec<Vec<&str>>) -> Vec<u8> {
             // Draw text scaled to fit into the cell
             let font = Vec::from(include_bytes!("Arial.ttf") as &[u8]);
             let font = Font::try_from_vec(font).expect("Failed to load font file");
-            // let scale = Scale::uniform(20.0); // Adjust text size as needed
-            let scale = get_scale_num(cell);
+            let mut scale = cell.get_scale(CELL_SIZE, &font);
 
-            // if there is more than one line
-            if cell.lines().count() > 1 {
-                let longest_line = cell.lines().max_by_key(|line| line.len()).unwrap();
-                for (i, line) in cell.lines().enumerate() {
-                    let offset = (
-                        // center text given on height (number of lines) and width (length of longest line)
-                        CELL_SIZE as i32
-                            - (longest_line.len() as i32
-                                * get_multiplier_from_line(cell.lines().count()) as i32),
-                        (CELL_SIZE as i32 - (cell.lines().count() as i32 * 20)) / 2,
-                    );
-                    draw_text_mut(
-                        &mut img,
-                        Rgba([0u8, 0u8, 0u8, 255u8]),
-                        x as i32 + offset.0 as i32,
-                        y as i32 + offset.1 as i32 + (i as i32 * 20),
-                        scale,
-                        &font,
-                        line,
-                    );
-                }
-            } else {
-                let offset = (
-                    // center text given on height (number of lines) and width (length of longest line)
-                    (CELL_SIZE as i32 - (cell.len() as i32 * 10)) / 2,
-                    (CELL_SIZE as i32 - (cell.lines().count() as i32 * 20)) / 2,
-                );
+            let mut cell_lines = cell.split_into_lines(CELL_SIZE, scale, &font);
+
+            // Readjust scale if height of all the text is too large
+            let height = cell_lines.len() as f32 * cell_lines[0].measure_height(scale, &font);
+            if height > CELL_SIZE as f32 {
+                scale = Scale::uniform(scale.x * (1.0 - CELL_SIZE as f32 / height));
+                cell_lines = cell.split_into_lines(CELL_SIZE, scale, &font);
+            }
+
+            // Offset for all lines
+            let vertical_offset = (CELL_SIZE
+                - (cell_lines
+                    .iter()
+                    .map(|l| l.measure_height(scale, &font))
+                    .sum::<f32>()) as u32)
+                / 2;
+
+            for (i, line) in cell_lines.into_iter().enumerate() {
+                // Center text
+                let horizontal_offset = (CELL_SIZE - (line.measure_width(scale, &font)) as u32) / 2;
+
                 draw_text_mut(
                     &mut img,
                     Rgba([0u8, 0u8, 0u8, 255u8]),
-                    x as i32 + offset.0,
-                    y as i32 + offset.1,
+                    x as i32 + horizontal_offset as i32,
+                    y as i32
+                        + vertical_offset as i32
+                        + (i as i32 * line.measure_height(scale, &font) as i32),
                     scale,
                     &font,
-                    cell,
+                    line,
                 );
             }
         }
@@ -168,34 +145,7 @@ fn create_bingo_card(items: Vec<&str>) -> Vec<Vec<&str>> {
 
 #[command(prefix_command)]
 pub async fn bingo(ctx: Context<'_>) -> Result<(), Error> {
-    let items = vec![
-        "Sound related gif\n(megaphone, \nmusic etc)",
-        "Walks all the way \nto the top of LT1",
-        "Totally ignores \nthat the mic keeps\n cutting out",
-        "states a grossly\noutdated number",
-        "Finishes 10+ mins\n early",
-        "Goes through what\nfeels like 1 month of\ncontent in one\nlecture",
-        "A slide has more\nthan 5 different\ncolours",
-        "Ends up giving 0\ntime to think during\nquiz slides",
-        "Gives up trying\nto explain an answer\nin quiz slides",
-        "Walks and stays\ndirectly next to\nyou",
-        "Stressing random\nbits of words",
-        "Using a sound\neffect that is completely\nunrelated to\nthe slide",
-        "Forgets what he\nwas going to say",
-        "Says \"IS THIS\nCLEAR TO YOU?!\"",
-        "Says \n\"LET ME REPEAT!\"",
-        "Says \"DO YOU\nUNDERSTAND?!\"",
-        "Uses laser\npointer",
-        "Flashing stuff\non slides",
-        "Talks unnecessarily\naggressive",
-        "A quirky GIF is\nin the slides",
-        "Takes less than 1\n minute for a slide\nthat needed much\nmore time",
-        "Skype mention",
-        "Uses 3+ different\ntypes of bullet\npoints",
-        "Flashing stuff on\nslides",
-        "Highlights a\nsingle dot",
-        // "TBD",
-    ];
+    let items: Vec<_> = include_str!("bingo_words.txt").lines().collect();
 
     let bingo_card = create_bingo_card(items);
     let img = generate_bingo_card(bingo_card);
@@ -207,4 +157,79 @@ pub async fn bingo(ctx: Context<'_>) -> Result<(), Error> {
     ctx.send(reply).await?;
 
     Ok(())
+}
+
+// This name is kind of random to be honest it doesn't mean anything
+// also can maybe be moved into a different file
+trait StringSizer {
+    fn measure_width(&self, scale: Scale, font: &Font) -> f32;
+    fn measure_height(&self, scale: Scale, font: &Font) -> f32;
+    fn split_into_lines(&self, max_width: u32, scale: Scale, font: &Font) -> Vec<&str>;
+    fn get_scale(&self, max_width: u32, font: &Font) -> Scale;
+}
+
+impl StringSizer for str {
+    fn measure_width(&self, scale: Scale, font: &Font) -> f32 {
+        // point doens't matter here
+        let width = font
+            .layout(self, scale, point(0.0, 0.0))
+            .last()
+            .map(|g| g.position().x + g.unpositioned().h_metrics().advance_width)
+            .unwrap_or(0.0);
+
+        width
+    }
+
+    fn measure_height(&self, scale: Scale, font: &Font) -> f32 {
+        let v_metrics = font.v_metrics(scale);
+        v_metrics.ascent - v_metrics.descent + v_metrics.line_gap
+    }
+
+    fn split_into_lines(&self, max_width: u32, scale: Scale, font: &Font) -> Vec<&str> {
+        let width = self.measure_width(scale, &font);
+
+        if width <= max_width as f32 {
+            vec![self]
+        } else {
+            // Find the character that causes it to go over the max_width
+            let end_of_line = font
+                .layout(self, scale, point(0.0, 0.0))
+                .map(|g| g.position().x + g.unpositioned().h_metrics().advance_width)
+                .position(|g| g > max_width as f32)
+                .expect("Given a string without a space");
+
+            // Find the first space from the end of the above character ^
+            let space_position = end_of_line
+                - self[0..end_of_line as usize]
+                    .bytes()
+                    .rev()
+                    .position(|b| b == b' ')
+                    .expect("Given a word thats too large to fit in the max_width");
+
+            // Rerun the function on the next line
+            let next_lines = &self[space_position..].split_into_lines(max_width, scale, font);
+
+            // Combine them
+            let mut ret = vec![&self[0..space_position - 1]];
+            ret.extend(next_lines);
+            ret
+        }
+    }
+
+    fn get_scale(&self, max_width: u32, font: &Font) -> Scale {
+        // Find the largest word using the max scale
+        let largest_width = self
+            .split(' ')
+            .map(|s| s.measure_width(MAX_TEXT_SCALE, font))
+            // We can't use `max` here because f32 does not impliment Ord
+            .reduce(|f, max| f.max(max))
+            .expect("Given empty string");
+
+        // If the largest word is too large, adjust the scale using a fraction of the max scale
+        if largest_width > max_width as f32 {
+            Scale::uniform(MAX_TEXT_SCALE.x * (max_width as f32 / largest_width))
+        } else {
+            MAX_TEXT_SCALE
+        }
+    }
 }
