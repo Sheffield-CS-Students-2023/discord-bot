@@ -39,12 +39,7 @@ fn make_starboard_embed(message: &Message) -> CreateEmbed {
     let mut embed = CreateEmbed::default()
         .title(format!(
             "{} 🌟",
-            message
-                .reactions
-                .iter()
-                .filter(|r| r.reaction_type == ReactionType::Unicode("⭐".to_string()))
-                .count()
-                + 1
+            MIN_STARS
         ))
         .author(
             CreateEmbedAuthor::new(&message.author.name)

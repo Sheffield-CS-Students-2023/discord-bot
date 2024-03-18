@@ -84,7 +84,7 @@ const DOTS: [StrOrChar<&str>; 27] = [
 ];
 
 fn remove_whitespace_from_end(text: &str, dot: &StrOrChar<&str>) -> String {
-    const WHITESPACE: [StrOrChar<&str>; 20] = [
+    const WHITESPACE: [StrOrChar<&str>; 21] = [
         StrOrChar::Char('\u{2000}'),
         StrOrChar::Char('\u{2001}'),
         StrOrChar::Char('\u{2003}'),
@@ -105,6 +105,7 @@ fn remove_whitespace_from_end(text: &str, dot: &StrOrChar<&str>) -> String {
         StrOrChar::Char('\u{3164}'),
         StrOrChar::Str(r"_[ \n]*_"),
         StrOrChar::Str(r"\|\|[ \n]*\|\|"),
+        StrOrChar::Str(r"<sound:\d+>")
     ];
 
     let mut owned_text = text.to_owned().to_string();
