@@ -8,6 +8,38 @@ use serenity::prelude::*;
 
 pub struct DotHandler;
 
+const DOTS: [StrOrChar<&str>; 27] = [
+    StrOrChar::Char('.'),
+    StrOrChar::Char('·'),
+    StrOrChar::Char('․'),
+    StrOrChar::Char('‧'),
+    StrOrChar::Char('⋅'),
+    StrOrChar::Char('・'),
+    StrOrChar::Char('⸱'),
+    StrOrChar::Char('ᐧ'),
+    StrOrChar::Char('⏺'),
+    StrOrChar::Char('●'),
+    StrOrChar::Char('⚬'),
+    StrOrChar::Char('⦁'),
+    StrOrChar::Char('⸰'),
+    StrOrChar::Char('﹒'),
+    StrOrChar::Char('⸱'),
+    StrOrChar::Char('⋅'),
+    StrOrChar::Char('。'),
+    StrOrChar::Char('．'),
+    StrOrChar::Char('｡'),
+    StrOrChar::Char('܂'),
+    StrOrChar::Char('˳'),
+    StrOrChar::Char('݀'),
+    StrOrChar::Char('݂'),
+    StrOrChar::Char('ܼ'),
+    StrOrChar::Char('ٜ'),
+    StrOrChar::Char('ִ'),
+    StrOrChar::Char('ׅ'),
+];
+
+const EXLUDED: u64 = 1166491561614385303;
+
 enum StrOrChar<T: AsRef<str>> {
     Str(T),
     Char(char),
@@ -52,36 +84,6 @@ impl std::fmt::Display for StrOrChar<&str> {
         }
     }
 }
-
-const DOTS: [StrOrChar<&str>; 27] = [
-    StrOrChar::Char('.'),
-    StrOrChar::Char('·'),
-    StrOrChar::Char('․'),
-    StrOrChar::Char('‧'),
-    StrOrChar::Char('⋅'),
-    StrOrChar::Char('・'),
-    StrOrChar::Char('⸱'),
-    StrOrChar::Char('ᐧ'),
-    StrOrChar::Char('⏺'),
-    StrOrChar::Char('●'),
-    StrOrChar::Char('⚬'),
-    StrOrChar::Char('⦁'),
-    StrOrChar::Char('⸰'),
-    StrOrChar::Char('﹒'),
-    StrOrChar::Char('⸱'),
-    StrOrChar::Char('⋅'),
-    StrOrChar::Char('。'),
-    StrOrChar::Char('．'),
-    StrOrChar::Char('｡'),
-    StrOrChar::Char('܂'),
-    StrOrChar::Char('˳'),
-    StrOrChar::Char('݀'),
-    StrOrChar::Char('݂'),
-    StrOrChar::Char('ܼ'),
-    StrOrChar::Char('ٜ'),
-    StrOrChar::Char('ִ'),
-    StrOrChar::Char('ׅ'),
-];
 
 fn remove_whitespace_from_end(text: &str, dot: &StrOrChar<&str>) -> String {
     const WHITESPACE: [StrOrChar<&str>; 21] = [
@@ -319,7 +321,20 @@ impl EventHandler for DotHandler {
         if msg.author.bot {
             return;
         }
-        // TODO add excluded users
+        // If the message is in dms
+        if msg.guild_id.is_none() {
+            return;
+        }
+        // Check if the message is fron a user with an exluded role
+        if msg
+            .author
+            .has_role(&ctx.http, msg.guild_id.unwrap(), EXLUDED)
+            .await
+            .unwrap_or(false)
+        {
+            return;
+        }
+
         // Figure out if it ends with a single dot and only has one
         // sentence using regex
         let text = find_if_dot(&msg.clone().content);
@@ -371,7 +386,22 @@ impl EventHandler for DotHandler {
         if event.clone().author.unwrap().bot {
             return;
         }
-        // TODO add excluded users
+        // If the message is in dms
+        if event.guild_id.is_none() {
+            return;
+        }
+        // Check if the message is fron a user with an exluded role
+        if event
+            .clone()
+            .author
+            .unwrap()
+            .has_role(&ctx.http, event.clone().guild_id.unwrap(), EXLUDED)
+            .await
+            .unwrap_or(false)
+        {
+            return;
+        }
+        
         // Figure out if it ends with a single dot and only has one
         // sentence using regex
         let text = find_if_dot(&event.clone().content.unwrap());
