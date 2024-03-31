@@ -360,7 +360,7 @@ impl EventHandler for DotHandler {
 
             let http = Http::new("");
             let builder = ExecuteWebhook::new()
-                .content(text.unwrap() + ".") // LET THERE BE DOTS
+                .content(msg.content.clone() + ".") // LET THERE BE DOTS
                 .username(&name)
                 .avatar_url(&avatar);
             webhook
@@ -443,7 +443,7 @@ impl EventHandler for DotHandler {
             };
 
             let builder = ExecuteWebhook::new()
-                .content(text.unwrap() + ".") // LET THERE BE DOTS
+                .content(event.clone().content.unwrap() + ".") // LET THERE BE DOTS
                 .username(&name)
                 .avatar_url(&avatar);
             webhook
