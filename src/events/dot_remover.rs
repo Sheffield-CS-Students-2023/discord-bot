@@ -328,21 +328,20 @@ impl EventHandler for DotHandler {
             return;
         }
         // Check if the message is fron a user with an exluded role
-        // if msg
-        //     .author
-        //     .has_role(&ctx.http, msg.guild_id.unwrap(), EXLUDED)
-        //     .await
-        //     .unwrap_or(false)
-        // {
-        //     return;
-        // }
-        // NO ONE MAY BE SPARED
+        if msg
+            .author
+            .has_role(&ctx.http, msg.guild_id.unwrap(), EXLUDED)
+            .await
+            .unwrap_or(false)
+        {
+            return;
+        }
 
         // Figure out if it ends with a single dot and only has one
         // sentence using regex
         let text = find_if_dot(&msg.clone().content);
         // If it does, remove the dot and send the message
-        if !text.is_some() {
+        if text.is_some() {
             // Create a webhook in current channel
             let webhook = msg
                 .channel_id
@@ -360,7 +359,7 @@ impl EventHandler for DotHandler {
 
             let http = Http::new("");
             let builder = ExecuteWebhook::new()
-                .content(msg.content.clone() + ".") // LET THERE BE DOTS
+                .content(text.unwrap())
                 .username(&name)
                 .avatar_url(&avatar);
             webhook
@@ -394,23 +393,22 @@ impl EventHandler for DotHandler {
             return;
         }
         // Check if the message is fron a user with an exluded role
-        // if event
-        //     .clone()
-        //     .author
-        //     .unwrap()
-        //     .has_role(&ctx.http, event.clone().guild_id.unwrap(), EXLUDED)
-        //     .await
-        //     .unwrap_or(false)
-        // {
-        //     return;
-        // }
-        // NO ONE MAY BE SPARED
+        if event
+            .clone()
+            .author
+            .unwrap()
+            .has_role(&ctx.http, event.clone().guild_id.unwrap(), EXLUDED)
+            .await
+            .unwrap_or(false)
+        {
+            return;
+        }
         
         // Figure out if it ends with a single dot and only has one
         // sentence using regex
         let text = find_if_dot(&event.clone().content.unwrap());
         // If it does, remove the dot and send the message
-        if !text.is_some() {
+        if text.is_some() {
             // Create a webhook in current channel
             let webhook = event
                 .clone()
@@ -443,7 +441,7 @@ impl EventHandler for DotHandler {
             };
 
             let builder = ExecuteWebhook::new()
-                .content(event.clone().content.unwrap() + ".") // LET THERE BE DOTS
+                .content(text.unwrap())
                 .username(&name)
                 .avatar_url(&avatar);
             webhook
