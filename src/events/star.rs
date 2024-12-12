@@ -24,7 +24,7 @@ fn make_starboard_embed(message: &Message) -> CreateEmbed {
             "<:reply:1176214702754377868> replying to [{}]({}): {}\n",
             reply.author.name,
             reply.link(),
-            reply.content.chars().take(20).collect::<String>()
+            reply.content.chars().take(100).collect::<String>()
         )
     } else {
         String::new()
