@@ -3,7 +3,7 @@ name: Rust App Deployment
 on:
   push:
     branches:
-      - rust-rewrite
+      - main
 
 jobs:
   clippy_check:
