@@ -17,7 +17,9 @@ impl TypeMapKey for MongoClient {
 
 pub struct StarHandler;
 
-fn make_starboard_embed(message: &Message) -> CreateEmbed {
+static EMOJIS: [&str; 2] = ["⭐", "💀"];
+
+fn make_starboard_embed(message: &Message, emoji: &str) -> CreateEmbed {
     let reply = message.referenced_message.as_ref();
     let reply_indicator = if let Some(reply) = reply {
         format!(
@@ -38,8 +40,9 @@ fn make_starboard_embed(message: &Message) -> CreateEmbed {
 
     let mut embed = CreateEmbed::default()
         .title(format!(
-            "{} 🌟",
-            MIN_STARS
+            "{} {}",
+            MIN_STARS,
+            emoji
         ))
         .author(
             CreateEmbedAuthor::new(&message.author.name)
@@ -69,9 +72,13 @@ impl EventHandler for StarHandler {
     // When a message is reacted to
 
     async fn reaction_add(&self, ctx: Context, reaction: Reaction) {
-        if reaction.emoji != ReactionType::Unicode("⭐".to_string()) {
+        // Return if emoji isn't in valid emojis
+        if !EMOJIS.iter().any(|&emoji| reaction.emoji == ReactionType::Unicode(emoji.to_string())) {
             return;
         }
+
+        // Hardcode emoji choices for now
+        let emoji = if reaction.emoji == ReactionType::Unicode("⭐".to_string()) { "🌟" } else { "💀" }; 
 
         if reaction.channel_id == STARBOARD_CHANNEL_ID {
             return;
@@ -108,7 +115,7 @@ impl EventHandler for StarHandler {
         // If the message has enough stars, send it to the starboard
         if data.stars.len() == MIN_STARS && data.starboard_id.is_none() {
             // Message has just reached starboard threshold
-            let embed = make_starboard_embed(&reaction_message);
+            let embed = make_starboard_embed(&reaction_message, emoji);
 
             let message = channel
                 .send_message(
@@ -129,8 +136,8 @@ impl EventHandler for StarHandler {
                 .message(&ctx.http, data.starboard_id.unwrap() as u64)
                 .await
                 .unwrap();
-            let mut embed = message.embeds.first().unwrap().clone();
-            embed.title = Some(format!("{} 🌟", data.stars.len()));
+            let mut embed = message.embeds.first().unwrap().clone();         
+            embed.title = Some(format!("{} {}", data.stars.len(), emoji));
             message
                 .edit(&ctx.http, EditMessage::new().embed(embed.into()))
                 .await
@@ -139,7 +146,8 @@ impl EventHandler for StarHandler {
     }
 
     async fn reaction_remove(&self, ctx: Context, reaction: Reaction) {
-        if reaction.emoji != ReactionType::Unicode("⭐".to_string()) {
+        // Return if emoji isn't in valid emojis
+        if !EMOJIS.iter().any(|&emoji| reaction.emoji == ReactionType::Unicode(emoji.to_string())) {
             return;
         }
 
@@ -172,7 +180,8 @@ impl EventHandler for StarHandler {
             .await
             .unwrap();
         let mut embed = message.embeds.first().unwrap().clone();
-        embed.title = Some(format!("{} 🌟", data.unwrap().stars.len()));
+        let emoji = if reaction.emoji == ReactionType::Unicode("⭐".to_string()) { "🌟" } else { "💀" };          
+        embed.title = Some(format!("{} {}", data.unwrap().stars.len(), emoji));
         message
             .edit(&ctx.http, EditMessage::new().embed(embed.into()))
             .await
