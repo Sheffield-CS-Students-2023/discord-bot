@@ -123,7 +123,10 @@ impl EventHandler for StarHandler {
             .await;
 
         // If the message has enough stars, send it to the starboard
-        if data.stars.len() == MIN_STARS && data.starboard_id.is_none() {
+        let mut stars = data.stars.clone();
+        stars.sort();
+        stars.dedup();
+        if stars.len() == MIN_STARS && data.starboard_id.is_none() {
             // Message has just reached starboard threshold
             let embed = make_starboard_embed(&reaction_message, &emoji);
 
@@ -140,16 +143,13 @@ impl EventHandler for StarHandler {
                 .update_starboard_message(data._id, message.id.into())
                 .await;
             // channel.say(&ctx.http, embed).await.unwrap();
-        } else if data.stars.len() >= MIN_STARS {
+        } else if stars.len() >= MIN_STARS {
             // Edit the starboard message to reflect the new amount of stars
             let mut message = channel
                 .message(&ctx.http, data.starboard_id.unwrap() as u64)
                 .await
                 .unwrap();
             let mut embed = message.embeds.first().unwrap().clone();         
-            let mut stars = data.stars.clone();
-            stars.sort();
-            stars.dedup();
             embed.title = Some(format!("{} {}", stars.len(), emoji));
             message
                 .edit(&ctx.http, EditMessage::new().embed(embed.into()))
