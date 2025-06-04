@@ -137,7 +137,10 @@ impl EventHandler for StarHandler {
                 .await
                 .unwrap();
             let mut embed = message.embeds.first().unwrap().clone();         
-            embed.title = Some(format!("{} {}", data.stars.len(), emoji));
+            let mut stars = data.stars.clone();
+            stars.sort();
+            stars.dedup();
+            embed.title = Some(format!("{} {}", stars.len(), emoji));
             message
                 .edit(&ctx.http, EditMessage::new().embed(embed.into()))
                 .await
@@ -181,7 +184,10 @@ impl EventHandler for StarHandler {
             .unwrap();
         let mut embed = message.embeds.first().unwrap().clone();
         let emoji = if reaction.emoji == ReactionType::Unicode("⭐".to_string()) { "🌟" } else { "💀" };          
-        embed.title = Some(format!("{} {}", data.unwrap().stars.len(), emoji));
+        let mut stars = data.unwrap().stars.clone();
+        stars.sort();
+        stars.dedup();
+        embed.title = Some(format!("{} {}", stars.len(), emoji));
         message
             .edit(&ctx.http, EditMessage::new().embed(embed.into()))
             .await

@@ -76,7 +76,11 @@ impl Starboard {
             .iter()
             .map(|x| x.as_i64().unwrap())
             .collect::<Vec<i64>>();
-        stars.retain(|x| *x != user_id);
+
+        // Remove only one instance of the user_id to allow for different emojis
+        if let Some(pos) = stars.iter().position(|x| *x == user_id) {
+            stars.remove(pos);
+        }
 
         let star_struct = StarStruct {
             _id: id,
